@@ -1,0 +1,16 @@
+export const COLORS = {
+  primary: '#560010',
+  primaryContainer: '#A6122D',
+  background: '#FFF8F8',
+  surface: '#FFF8F8',
+  surfaceContainerLow: '#FFF0F4',
+  surfaceContainerHigh: '#F7E3E9',
+  surfaceContainerHighest: '#F1DEE3',
+  onSurface: '#23191D',
+  onSurfaceVariant: '#584141',
+  outline: '#8C7070',
+  emerald: '#059669',
+  emeraldLight: '#D1FAE5',
+  cardBg: '#FFFFFF',
+  roseBorder: '#F1DEE3',
+};

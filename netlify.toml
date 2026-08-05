@@ -1,0 +1,12 @@
+[build]
+  command = "npm run build:web"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+  EXPO_OFFLINE = "1"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
