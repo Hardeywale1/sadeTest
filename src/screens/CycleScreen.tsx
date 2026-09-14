@@ -6,12 +6,13 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Alert,
 } from 'react-native';
 import { cycleApi } from '../api/cycleApi';
 import { CycleStatus, PeriodLog, OvulationLog } from '../types';
 import { COLORS } from '../theme/colors';
 import { CalendarField } from '../components/CalendarField';
+import { CycleProgress } from '../components/CycleProgress';
+import { toast } from '../components/Toast';
 
 const localISODate = () => {
   const now = new Date();
@@ -60,7 +61,7 @@ export const CycleScreen: React.FC = () => {
     try {
       const temperature = Number(bbt);
       if (!Number.isFinite(temperature) || temperature < 95 || temperature > 105) {
-        Alert.alert('Check temperature', 'Enter a basal body temperature between 95°F and 105°F.');
+        toast('Check temperature', 'Enter a basal body temperature between 95°F and 105°F.', 'error');
         return;
       }
       await Promise.all([cycleApi.logOvulation({
@@ -68,25 +69,25 @@ export const CycleScreen: React.FC = () => {
         is_confirmed: opkResult === 'Positive (+)',
         method: 'opk',
       }), cycleApi.logSymptoms({ date: ovulationDate, bbt: temperature })]);
-      Alert.alert('Success', 'Fertility & Ovulation log saved!');
+      toast('Saved', 'Fertility & ovulation log recorded.', 'success');
       loadCycleData();
-    } catch (err) {
-      Alert.alert('Error', 'Failed to save ovulation log.');
+    } catch (err: any) {
+      toast('Could not save', err?.response?.data?.error || 'Failed to save ovulation log.', 'error');
     }
   };
 
   const handleLogPeriod = async () => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(periodDate)) {
-      Alert.alert('Check date', 'Use YYYY-MM-DD for the first day of bleeding.');
+      toast('Check date', 'Use YYYY-MM-DD for the first day of bleeding.', 'error');
       return;
     }
     setSavingPeriod(true);
     try {
       await cycleApi.logPeriod({ start_date: periodDate, flow_days: [{ date: periodDate, intensity: flow }] });
-      Alert.alert('Period logged', 'Your cycle day and phase have been recalculated.');
+      toast('Period logged', 'Your cycle day and phase have been recalculated.', 'success');
       await loadCycleData();
-    } catch (error) {
-      Alert.alert('Could not save', 'Please try logging your period again.');
+    } catch (error: any) {
+      toast('Could not save', error?.response?.data?.error || 'Please try logging your period again.', 'error');
     } finally {
       setSavingPeriod(false);
     }
@@ -96,12 +97,24 @@ export const CycleScreen: React.FC = () => {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Header Banner */}
       <View style={styles.heroBanner}>
-        <Text style={styles.heroBadge}>CYCLE &amp; FERTILITY SANCTUARY</Text>
+        <Text style={styles.heroBadge}>CYCLE &amp; FERTILITY</Text>
         <Text style={styles.heroTitle}>{status?.last_period_start ? status.heading : 'Begin when you are ready'}</Text>
         <Text style={styles.heroSubtitle}>
-          {status?.last_period_start ? `Day ${status.cycle_day} of ${status.avg_cycle_length} • ${status.subtitle}` : 'Add your latest period to begin phase estimates.'}
+          {status?.last_period_start ? status.subtitle : 'Add your latest period to begin phase estimates.'}
         </Text>
-        {status?.last_period_start ? <Text style={styles.phaseNote}>{PHASE_NOTE[status.phase]}</Text> : null}
+        {status?.last_period_start ? (
+          <>
+            <CycleProgress
+              cycleDay={status.cycle_day}
+              cycleLength={status.avg_cycle_length}
+              periodLength={status.avg_period_length}
+              nextPeriodInDays={status.next_period_in_days}
+              phase={status.phase}
+              subtitle={status.subtitle}
+            />
+            <Text style={styles.phaseNote}>{PHASE_NOTE[status.phase]}</Text>
+          </>
+        ) : null}
       </View>
 
       <Text style={styles.sectionTitle}>Log your period</Text>

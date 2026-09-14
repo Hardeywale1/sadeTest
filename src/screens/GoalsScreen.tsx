@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { goalsApi } from '../api/goalsApi';
 import { interestsApi } from '../api/profileApi';
+import { toast } from '../components/Toast';
 import { Goal, InterestCategory } from '../types';
 import { COLORS } from '../theme/colors';
 
@@ -23,7 +24,7 @@ export const GoalsScreen: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       setCatalog(categories);
       setValues(Object.fromEntries(mine.goals.map((goal) => [goal.id, String(goal.current_value)])));
     } catch (error: any) {
-      Alert.alert('Could not load goals', error?.response?.data?.error || 'Please try again.');
+      toast('Could not load goals', error?.response?.data?.error || 'Please try again.', 'error');
     } finally { setLoading(false); }
   };
 
@@ -32,16 +33,16 @@ export const GoalsScreen: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const assign = async (preset: Goal) => {
     setBusyID(preset.id);
     try { await goalsApi.assignPreset(preset.id); await load(); }
-    catch (error: any) { Alert.alert('Could not add goal', error?.response?.data?.error || 'Please try again.'); }
+    catch (error: any) { toast('Could not add goal', error?.response?.data?.error || 'Please try again.', 'error'); }
     finally { setBusyID(''); }
   };
 
   const update = async (goal: Goal) => {
     const amount = Number(values[goal.id]);
-    if (!Number.isFinite(amount) || amount < 0) return Alert.alert('Check progress', 'Enter a valid progress value.');
+    if (!Number.isFinite(amount) || amount < 0) return toast('Check progress', 'Enter a valid progress value.', 'error');
     setBusyID(goal.id);
     try { await goalsApi.updateProgress(goal.id, amount); await load(); }
-    catch (error: any) { Alert.alert('Could not update goal', error?.response?.data?.error || 'Please try again.'); }
+    catch (error: any) { toast('Could not update goal', error?.response?.data?.error || 'Please try again.', 'error'); }
     finally { setBusyID(''); }
   };
 

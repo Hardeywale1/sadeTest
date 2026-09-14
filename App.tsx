@@ -12,6 +12,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { Header } from './src/components/Header';
+import { ToastHost } from './src/components/Toast';
 import { AuthScreen } from './src/screens/AuthScreen';
 import { DashboardScreen } from './src/screens/DashboardScreen';
 import { TrackerScreen } from './src/screens/TrackerScreen';
@@ -25,6 +26,38 @@ import { COLORS } from './src/theme/colors';
 
 type TabType = 'dashboard' | 'cycle' | 'journal' | 'community' | 'settings';
 
+const TAB_SUBTITLE: Record<TabType, string> = {
+  dashboard: 'HOME',
+  cycle: 'TRACK',
+  journal: 'JOURNAL',
+  community: 'LOUNGE',
+  settings: 'ACCOUNT',
+};
+
+/**
+ * Expo's web template sizes the root element with `height: 100%`, which on mobile
+ * browsers is measured against the large viewport — the bottom navigation then sits
+ * underneath the browser chrome and reads as "missing". `100dvh` tracks the visible
+ * viewport instead, so the nav bar stays on screen on every page.
+ */
+const useWebViewportFix = () => {
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+    const style = document.createElement('style');
+    style.id = 'sade-viewport-fix';
+    style.textContent = `
+      @supports (height: 100dvh) {
+        html, body, #root { height: 100dvh; }
+      }
+      body { overflow: hidden; }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      style.remove();
+    };
+  }, []);
+};
+
 const AppContent: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
   const [currentTab, setCurrentTab] = useState<TabType>('dashboard');
@@ -33,8 +66,17 @@ const AppContent: React.FC = () => {
   const [goalsOpen, setGoalsOpen] = useState(false);
   const [trackerView, setTrackerView] = useState<'today' | 'cycle'>('today');
 
+  useWebViewportFix();
+
   const navigateFromDashboard = (tab: 'cycle' | 'journal', nextTrackerView?: 'today' | 'cycle') => {
     if (nextTrackerView) setTrackerView(nextTrackerView);
+    setCurrentTab(tab);
+  };
+
+  // Tapping the nav always leaves whichever sub-screen is open, so the tabs stay usable.
+  const selectTab = (tab: TabType) => {
+    setCareJourneyOpen(false);
+    setGoalsOpen(false);
     setCurrentTab(tab);
   };
 
@@ -52,7 +94,7 @@ const AppContent: React.FC = () => {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={COLORS.primaryContainer} />
-        <Text style={styles.loadingText}>Loading Sadé Sanctuary...</Text>
+        <Text style={styles.loadingText}>Loading Sadé...</Text>
       </View>
     );
   }
@@ -65,24 +107,24 @@ const AppContent: React.FC = () => {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={COLORS.primaryContainer} />
-        <Text style={styles.loadingText}>Preparing your personal sanctuary...</Text>
+        <Text style={styles.loadingText}>Preparing your space...</Text>
       </View>
     );
   }
 
+  // First-run onboarding is the only flow that owns the whole screen: there is
+  // nothing to navigate to yet. Every other screen keeps the tab bar.
   if (onboardingState === 'required') {
     return <OnboardingScreen onComplete={() => setOnboardingState('complete')} />;
   }
 
-  if (careJourneyOpen) {
-    return <OnboardingScreen mode="careJourney" onComplete={() => setCareJourneyOpen(false)} />;
-  }
-
-  if (goalsOpen) {
-    return <GoalsScreen onClose={() => setGoalsOpen(false)} />;
-  }
-
   const renderActiveScreen = () => {
+    if (careJourneyOpen) {
+      return <OnboardingScreen mode="careJourney" onComplete={() => setCareJourneyOpen(false)} />;
+    }
+    if (goalsOpen) {
+      return <GoalsScreen onClose={() => setGoalsOpen(false)} />;
+    }
     switch (currentTab) {
       case 'dashboard':
         return <DashboardScreen onNavigate={navigateFromDashboard} />;
@@ -95,9 +137,11 @@ const AppContent: React.FC = () => {
       case 'settings':
         return <SettingsScreen onEditOnboarding={() => setCareJourneyOpen(true)} onManageGoals={() => setGoalsOpen(true)} />;
       default:
-        return <DashboardScreen />;
+        return <DashboardScreen onNavigate={navigateFromDashboard} />;
     }
   };
+
+  const headerSubtitle = careJourneyOpen ? 'CARE JOURNEY' : goalsOpen ? 'GOALS' : TAB_SUBTITLE[currentTab];
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -105,15 +149,15 @@ const AppContent: React.FC = () => {
       <View style={styles.webContainer}>
         {/* Header */}
         <Header
-          subtitle={currentTab.toUpperCase()}
-          onRightPress={() => setCurrentTab('settings')}
+          subtitle={headerSubtitle}
+          onRightPress={() => selectTab('settings')}
           rightIconName={currentTab === 'settings' ? 'cog-outline' : 'account-circle-outline'}
         />
 
         {/* Screen Content */}
         <View style={styles.mainCanvas}>{renderActiveScreen()}</View>
 
-        {/* Responsive Bottom Navigation Bar */}
+        {/* Responsive Bottom Navigation Bar — visible on every authenticated screen */}
         <View style={styles.bottomNav}>
           {([
             ['dashboard', 'home-variant-outline', 'home-variant', 'Home'],
@@ -122,9 +166,9 @@ const AppContent: React.FC = () => {
             ['community', 'account-group-outline', 'account-group', 'Lounge'],
             ['settings', 'account-circle-outline', 'account-circle', 'Account'],
           ] as const).map(([tab, icon, activeIcon, label]) => {
-            const active = currentTab === tab;
+            const active = currentTab === tab && !careJourneyOpen && !goalsOpen;
             return (
-              <TouchableOpacity key={tab} style={styles.navItem} onPress={() => setCurrentTab(tab)} accessibilityRole="tab" accessibilityState={{ selected: active }}>
+              <TouchableOpacity key={tab} style={styles.navItem} onPress={() => selectTab(tab)} accessibilityRole="tab" accessibilityState={{ selected: active }}>
                 <View style={[styles.iconPill, active && styles.iconPillActive]}>
                   <MaterialCommunityIcons name={active ? activeIcon : icon} size={22} color={active ? COLORS.primary : COLORS.onSurfaceVariant} />
                 </View>
@@ -141,7 +185,9 @@ const AppContent: React.FC = () => {
 export default function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <ToastHost>
+        <AppContent />
+      </ToastHost>
     </AuthProvider>
   );
 }
@@ -172,9 +218,14 @@ const styles = StyleSheet.create({
   },
   mainCanvas: {
     flex: 1,
+    // Without this the canvas grows with its content on web and pushes the nav bar
+    // below the fold instead of letting the inner ScrollViews scroll.
+    minHeight: 0,
+    overflow: 'hidden',
   },
   bottomNav: {
     height: 76,
+    flexShrink: 0,
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderTopWidth: 1,
     borderTopColor: COLORS.surfaceContainerHighest,

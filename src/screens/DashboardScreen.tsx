@@ -12,6 +12,7 @@ import { useAuth } from '../context/AuthContext';
 import { cycleApi } from '../api/cycleApi';
 import { logsApi } from '../api/logsApi';
 import { goalsApi } from '../api/goalsApi';
+import { CycleProgress } from '../components/CycleProgress';
 import { CycleStatus, Goal, LogSummary } from '../types';
 import { COLORS } from '../theme/colors';
 
@@ -23,7 +24,7 @@ const PHASE_GUIDANCE: Record<string, string> = {
 };
 
 export const DashboardScreen: React.FC<{ onNavigate?: (tab: 'cycle' | 'journal', trackerView?: 'today' | 'cycle') => void }> = ({ onNavigate }) => {
-  const { user } = useAuth();
+  const { greetingName } = useAuth();
   const [cycleStatus, setCycleStatus] = useState<CycleStatus | null>(null);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [summary, setSummary] = useState<LogSummary | null>(null);
@@ -78,23 +79,43 @@ export const DashboardScreen: React.FC<{ onNavigate?: (tab: 'cycle' | 'journal',
     >
       {/* Greeting Header */}
       <View style={styles.greetingHeader}>
-        <Text style={styles.greetingTitle}>Hello, {user?.display_name || 'Sister'}</Text>
-        <Text style={styles.greetingSubtitle}>Welcome back to your health sanctuary.</Text>
+        <Text style={styles.greetingTitle}>Hello, {greetingName}</Text>
+        <Text style={styles.greetingSubtitle}>Welcome back to your Sadé space.</Text>
       </View>
 
       {/* Cycle Phase Widget */}
-      <View style={styles.cycleCard}>
+      <TouchableOpacity
+        style={styles.cycleCard}
+        activeOpacity={0.9}
+        onPress={() => onNavigate?.('cycle', 'cycle')}
+        accessibilityRole="button"
+        accessibilityLabel="Open cycle tracking"
+      >
         <View style={styles.cycleBadgeRow}>
           <Text style={styles.cycleBadge}>
-            {cycleStatus?.phase ? cycleStatus.phase.toUpperCase() + ' PHASE' : 'CYCLE SANCTUARY'}
+            {cycleStatus?.last_period_start ? cycleStatus.phase_label.toUpperCase() : 'YOUR CYCLE'}
           </Text>
-          <Text style={styles.cycleDay}>{cycleStatus?.last_period_start ? `Day ${cycleStatus.cycle_day} of ${cycleStatus.avg_cycle_length}` : 'Add cycle details'}</Text>
+          <Text style={styles.cycleDay}>
+            {cycleStatus?.last_period_start ? `Day ${cycleStatus.cycle_day} of ${cycleStatus.avg_cycle_length}` : 'Add cycle details'}
+          </Text>
         </View>
         <Text style={styles.cycleHeading}>{cycleStatus?.last_period_start ? cycleStatus.heading : 'Your cycle, at your pace'}</Text>
         <Text style={styles.cycleDesc}>
           {cycleStatus?.last_period_start ? PHASE_GUIDANCE[cycleStatus.phase] : 'Log a period when you are ready to receive phase-aware estimates.'}
         </Text>
-      </View>
+        {cycleStatus?.last_period_start ? (
+          <CycleProgress
+            cycleDay={cycleStatus.cycle_day}
+            cycleLength={cycleStatus.avg_cycle_length}
+            periodLength={cycleStatus.avg_period_length}
+            nextPeriodInDays={cycleStatus.next_period_in_days}
+            phase={cycleStatus.phase}
+            subtitle={cycleStatus.subtitle}
+          />
+        ) : (
+          <Text style={styles.cycleCta}>Tap to log your last period →</Text>
+        )}
+      </TouchableOpacity>
 
       {journeyGoals.length ? <>
         <Text style={styles.sectionHeader}>Your Care Focus</Text>
@@ -219,6 +240,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'rgba(255,255,255,0.8)',
     lineHeight: 18,
+  },
+  cycleCta: {
+    fontSize: 12,
+    color: '#FFB3B4',
+    fontWeight: '700',
+    marginTop: 12,
   },
   sectionHeader: {
     fontSize: 14,

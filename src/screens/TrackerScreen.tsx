@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { CalendarField } from '../components/CalendarField';
+import { toast } from '../components/Toast';
 import { interestsApi } from '../api/profileApi';
 import { logsApi } from '../api/logsApi';
 import { cycleApi } from '../api/cycleApi';
@@ -66,7 +67,7 @@ export const TrackerScreen: React.FC<{ initialView?: ViewMode }> = ({ initialVie
 
   const saveLog = async () => {
     const amount = Number(value);
-    if (!Number.isFinite(amount) || amount < 0) return Alert.alert('Check your entry', `Add a valid ${metric.label.toLowerCase()} value.`);
+    if (!Number.isFinite(amount) || amount < 0) return toast('Check your entry', `Add a valid ${metric.label.toLowerCase()} value.`, 'error');
     setSaving(true);
     try {
       const payload = { [metric.key]: amount };
@@ -78,7 +79,7 @@ export const TrackerScreen: React.FC<{ initialView?: ViewMode }> = ({ initialVie
       await load();
       setView('history');
     } catch (error: any) {
-      Alert.alert('Could not save', error?.response?.data?.error || 'Your daily log could not be saved. Please try again.');
+      toast('Could not save', error?.response?.data?.error || 'Your daily log could not be saved. Please try again.', 'error');
     } finally { setSaving(false); }
   };
 

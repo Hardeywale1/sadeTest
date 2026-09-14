@@ -33,7 +33,10 @@ export const AuthScreen: React.FC = () => {
       if (isLoginTab) {
         await login(email, password);
       } else {
-        await signup(email, password, displayName || 'Sanctuary Member');
+        // Fall back to the email local part rather than a generic label, so the
+        // greeting reads as the person's own name from the first session.
+        const fallbackName = email.split('@')[0].replace(/[._-]+/g, ' ').trim();
+        await signup(email, password, displayName.trim() || fallbackName);
       }
     } catch (err: any) {
       const msg = err.response?.data?.error || 'Authentication failed. Check details.';
@@ -51,7 +54,7 @@ export const AuthScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.card}>
           <Text style={styles.brandTitle}>Sadé</Text>
-          <Text style={styles.brandSubtitle}>Women's Health & Wellness Sanctuary</Text>
+          <Text style={styles.brandSubtitle}>Women's Health &amp; Wellness Space</Text>
 
           {/* Toggle Bar */}
           <View style={styles.toggleBar}>
@@ -114,7 +117,7 @@ export const AuthScreen: React.FC = () => {
             {loading ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text style={styles.submitBtnText}>{isLoginTab ? 'Welcome Back' : 'Join the Sanctuary'}</Text>
+              <Text style={styles.submitBtnText}>{isLoginTab ? 'Welcome Back' : 'Join Sadé'}</Text>
             )}
           </TouchableOpacity>
         </View>

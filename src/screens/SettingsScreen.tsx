@@ -6,16 +6,16 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Alert,
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { profileApi } from '../api/profileApi';
 import { authApi } from '../api/authApi';
+import { toast } from '../components/Toast';
 import { Profile, Session } from '../types';
 import { COLORS } from '../theme/colors';
 
 export const SettingsScreen: React.FC<{ onEditOnboarding?: () => void; onManageGoals?: () => void }> = ({ onEditOnboarding, onManageGoals }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [displayName, setDisplayName] = useState('');
@@ -49,10 +49,12 @@ export const SettingsScreen: React.FC<{ onEditOnboarding?: () => void; onManageG
   const handleUpdateProfile = async () => {
     try {
       await profileApi.updateProfile({ display_name: displayName });
-      Alert.alert('Success', 'Profile updated!');
+      // Keep the greeting on the home screen in step with the new name.
+      await refreshUser();
+      toast('Profile updated', undefined, 'success');
       loadSettingsData();
-    } catch (e) {
-      Alert.alert('Error', 'Failed to update profile.');
+    } catch (e: any) {
+      toast('Could not update profile', e?.response?.data?.error || 'Please try again.', 'error');
     }
   };
 
@@ -66,7 +68,7 @@ export const SettingsScreen: React.FC<{ onEditOnboarding?: () => void; onManageG
       await authApi.changePassword(currentPassword, newPassword);
       setCurrentPassword('');
       setNewPassword('');
-      Alert.alert('Success', 'Password changed successfully!');
+      toast('Password changed', 'Your new password is now active.', 'success');
     } catch (err: any) {
       const msg = err.response?.data?.error || 'Could not change password.';
       setPasswordMsg(msg);
@@ -76,7 +78,7 @@ export const SettingsScreen: React.FC<{ onEditOnboarding?: () => void; onManageG
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.title}>Account &amp; Security</Text>
-      <Text style={styles.subtitle}>Manage your profile, active sessions &amp; sanctuary security.</Text>
+      <Text style={styles.subtitle}>Manage your profile, active sessions &amp; account security.</Text>
 
       {/* Profile Section */}
       <Text style={styles.sectionHeader}>Profile Information</Text>
@@ -160,7 +162,7 @@ export const SettingsScreen: React.FC<{ onEditOnboarding?: () => void; onManageG
 
       {/* Logout Button */}
       <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
-        <Text style={styles.logoutBtnText}>Logout of Sanctuary</Text>
+        <Text style={styles.logoutBtnText}>Log out</Text>
       </TouchableOpacity>
     </ScrollView>
   );

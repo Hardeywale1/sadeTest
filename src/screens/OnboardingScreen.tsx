@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -15,6 +14,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { cycleApi } from '../api/cycleApi';
 import { interestsApi, onboardingApi, profileApi } from '../api/profileApi';
 import { goalsApi } from '../api/goalsApi';
+import { toast } from '../components/Toast';
 import { Goal, InterestCategory, OnboardingSection, Questionnaire } from '../types';
 import { COLORS } from '../theme/colors';
 import { CalendarField } from '../components/CalendarField';
@@ -30,7 +30,7 @@ const SECTION_COPY: Record<OnboardingSection, { title: string; eyebrow: string; 
   health_conditions: { title: 'Your health context', eyebrow: 'HEALTH', intro: 'Select only what you are comfortable sharing.', icon: 'medical-bag' },
   lifestyle: { title: 'Your daily rhythm', eyebrow: 'LIFESTYLE', intro: 'Small details help us shape realistic wellness suggestions.', icon: 'weather-sunset' },
   goals: { title: 'What brings you here?', eyebrow: 'YOUR GOALS', intro: 'Choose the outcomes you would most like Sadé to support.', icon: 'target' },
-  interests: { title: 'Build your sanctuary', eyebrow: 'INTERESTS', intro: 'Your choices shape your home feed, goals, resources and community.', icon: 'flower-outline' },
+  interests: { title: 'Build your space', eyebrow: 'INTERESTS', intro: 'Your choices shape your home feed, goals, resources and community.', icon: 'flower-outline' },
 };
 
 const FALLBACK_SECTIONS: Stage[] = ['demographics', 'cycle_history', 'pain_profile', 'health_conditions', 'lifestyle', 'interests', 'preset_goals'];
@@ -135,14 +135,14 @@ export const OnboardingScreen: React.FC<Props> = ({ onComplete, mode = 'onboardi
       if (cycleLength < 15 || cycleLength > 60) return 'Cycle length should be between 15 and 60 days.';
       if (periodLength < 1 || periodLength > 14 || periodLength >= cycleLength) return 'Period length should be between 1 and 14 days and shorter than your cycle.';
     }
-    if (section === 'interests' && !selectedInterests.length) return 'Choose at least one interest to shape your sanctuary.';
+    if (section === 'interests' && !selectedInterests.length) return 'Choose at least one interest to shape your space.';
     if (section === 'preset_goals' && !selectedPresets.length && !existingGoalTitles.length) return 'Choose at least one goal for your journey.';
     return '';
   };
 
   const next = async () => {
     const error = validate();
-    if (error) return Alert.alert('One more detail', error);
+    if (error) return toast('One more detail', error, 'error');
     setSaving(true);
     try {
       if (section === 'interests') await interestsApi.replaceSelection(selectedInterests);
@@ -150,7 +150,7 @@ export const OnboardingScreen: React.FC<Props> = ({ onComplete, mode = 'onboardi
       if (step < sections.length - 1) setStep((value) => value + 1);
       else await complete();
     } catch (error) {
-      Alert.alert('Could not save', 'Your answers are still on this screen. Please try again.');
+      toast('Could not save', 'Your answers are still on this screen. Please try again.', 'error');
     } finally {
       setSaving(false);
     }
@@ -243,7 +243,7 @@ export const OnboardingScreen: React.FC<Props> = ({ onComplete, mode = 'onboardi
       <View style={styles.form}>{renderSection()}</View>
       <View style={styles.actions}>
         {step > 0 ? <TouchableOpacity style={styles.backButton} onPress={() => setStep((value) => value - 1)}><MaterialCommunityIcons name="arrow-left" size={20} color={COLORS.primary} /><Text style={styles.backText}>Back</Text></TouchableOpacity> : <View />}
-        <TouchableOpacity style={[styles.primaryButton, saving && styles.disabled]} onPress={next} disabled={saving}>{saving ? <ActivityIndicator color="#FFFFFF" /> : <><Text style={styles.primaryButtonText}>{step === sections.length - 1 ? (mode === 'careJourney' ? 'Save my journey' : 'Enter my sanctuary') : 'Continue'}</Text><MaterialCommunityIcons name="arrow-right" size={19} color="#FFFFFF" /></>}</TouchableOpacity>
+        <TouchableOpacity style={[styles.primaryButton, saving && styles.disabled]} onPress={next} disabled={saving}>{saving ? <ActivityIndicator color="#FFFFFF" /> : <><Text style={styles.primaryButtonText}>{step === sections.length - 1 ? (mode === 'careJourney' ? 'Save my journey' : 'Enter my space') : 'Continue'}</Text><MaterialCommunityIcons name="arrow-right" size={19} color="#FFFFFF" /></>}</TouchableOpacity>
       </View>
     </ScrollView>
   </KeyboardAvoidingView>;

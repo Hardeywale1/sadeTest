@@ -209,6 +209,11 @@ export interface Post {
   body: string;
   is_anonymous: boolean;
   comment_count: number;
+  like_count: number;
+  /** True when the signed-in reader has already liked this post. */
+  liked_by_me: boolean;
+  /** Resolved author display name, or "Anonymous" for anonymous posts. */
+  author_name: string;
   is_deleted: boolean;
   created_at: string;
   updated_at: string;
@@ -219,6 +224,7 @@ export interface Comment {
   post_id: string;
   user_id: string;
   body: string;
+  author_name: string;
   is_deleted: boolean;
   created_at: string;
   updated_at: string;

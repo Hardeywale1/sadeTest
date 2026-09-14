@@ -18,6 +18,18 @@ export const communityApi = {
     return res.data;
   },
 
+  /** Likes a post and returns the updated post (idempotent server-side). */
+  async likePost(postId: string): Promise<Post> {
+    const res = await apiClient.post<Post>(`/v1/posts/${postId}/like`);
+    return res.data;
+  },
+
+  /** Removes a like and returns the updated post (idempotent server-side). */
+  async unlikePost(postId: string): Promise<Post> {
+    const res = await apiClient.delete<Post>(`/v1/posts/${postId}/like`);
+    return res.data;
+  },
+
   async addComment(postId: string, body: string): Promise<Comment> {
     const res = await apiClient.post<Comment>(`/v1/posts/${postId}/comments`, { body });
     return res.data;

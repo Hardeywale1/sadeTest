@@ -7,9 +7,9 @@ import {
   TouchableOpacity,
   TextInput,
   Modal,
-  Alert,
 } from 'react-native';
 import { journalApi } from '../api/journalApi';
+import { toast } from '../components/Toast';
 import { JournalEntry } from '../types';
 import { COLORS } from '../theme/colors';
 
@@ -45,11 +45,11 @@ export const JournalScreen: React.FC = () => {
 
   const handleCreateEntry = async () => {
     if (!body.trim()) {
-      Alert.alert('Error', 'Please enter a reflection body.');
+      toast('Add a reflection', 'Please write something before saving.', 'error');
       return;
     }
     if (monthlyLimitReached) {
-      Alert.alert('Monthly journal limit reached', 'You can save up to 20 reflections each calendar month. Your existing entries remain available.');
+      toast('Monthly journal limit reached', 'You can save up to 20 reflections each calendar month. Your existing entries remain available.', 'error');
       return;
     }
     setSaving(true);
@@ -63,9 +63,10 @@ export const JournalScreen: React.FC = () => {
       setTitle('');
       setBody('');
       setModalVisible(false);
+      toast('Reflection saved', undefined, 'success');
       loadJournal();
     } catch (e: any) {
-      Alert.alert('Could not save reflection', e?.response?.data?.error || 'The backend could not save this entry. Please try again.');
+      toast('Could not save reflection', e?.response?.data?.error || 'The backend could not save this entry. Please try again.', 'error');
     } finally { setSaving(false); }
   };
 
@@ -74,8 +75,8 @@ export const JournalScreen: React.FC = () => {
       await journalApi.deleteEntry(id);
       setSelectedEntry(null);
       loadJournal();
-    } catch (e) {
-      Alert.alert('Error', 'Failed to delete entry.');
+    } catch (e: any) {
+      toast('Could not delete', e?.response?.data?.error || 'Failed to delete entry.', 'error');
     }
   };
 
@@ -88,7 +89,7 @@ export const JournalScreen: React.FC = () => {
             <Text style={styles.subtitle}>Reflect on your journey toward balance.</Text>
             <Text style={styles.allowance}>{monthlyCount} of 20 reflections used this month</Text>
           </View>
-          <TouchableOpacity style={[styles.addBtn, monthlyLimitReached && styles.disabled]} onPress={() => monthlyLimitReached ? Alert.alert('Monthly limit reached', 'Your next journal allowance starts next calendar month.') : setModalVisible(true)}>
+          <TouchableOpacity style={[styles.addBtn, monthlyLimitReached && styles.disabled]} onPress={() => monthlyLimitReached ? toast('Monthly limit reached', 'Your next journal allowance starts next calendar month.', 'error') : setModalVisible(true)}>
             <Text style={styles.addBtnText}>+ New</Text>
           </TouchableOpacity>
         </View>

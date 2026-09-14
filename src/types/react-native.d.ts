@@ -24,3 +24,12 @@ declare module '@react-native-async-storage/async-storage' {
   };
   export default AsyncStorage;
 }
+
+// `@types/react-dom` is not installed; only createPortal is used, to lift toasts
+// above react-native-web's body-level Modal container on the web build.
+declare module 'react-dom' {
+  const ReactDOM: {
+    createPortal: (children: any, container: any, key?: string) => any;
+  };
+  export default ReactDOM;
+}
