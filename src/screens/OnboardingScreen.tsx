@@ -73,9 +73,10 @@ export const OnboardingScreen: React.FC<Props> = ({ onComplete, mode = 'onboardi
   const [loadError, setLoadError] = useState('');
 
   const sections = useMemo(() => {
+    if (mode === 'onboarding') return ['demographics', 'cycle_history', 'health_conditions', 'preset_goals'] as Stage[];
     const questionnaireSections = questionnaire?.sections?.filter((item): item is Exclude<OnboardingSection, 'goals' | 'interests'> => item in SECTION_COPY && item !== 'goals' && item !== 'interests') || [];
     return questionnaireSections.length ? [...questionnaireSections, 'interests' as const, 'preset_goals' as const] : FALLBACK_SECTIONS;
-  }, [questionnaire]);
+  }, [questionnaire, mode]);
   const section = sections[step] || 'demographics';
   const copy = section === 'preset_goals'
     ? { title: 'Choose your first goals', eyebrow: 'GOALS', intro: 'Select a few practical presets. You can track progress and add custom goals later.', icon: 'target' as const }
@@ -136,8 +137,15 @@ export const OnboardingScreen: React.FC<Props> = ({ onComplete, mode = 'onboardi
       if (periodLength < 1 || periodLength > 14 || periodLength >= cycleLength) return 'Period length should be between 1 and 14 days and shorter than your cycle.';
     }
     if (section === 'interests' && !selectedInterests.length) return 'Choose at least one interest to shape your space.';
-    if (section === 'preset_goals' && !selectedPresets.length && !existingGoalTitles.length) return 'Choose at least one goal for your journey.';
+
     return '';
+  };
+
+  const skip = async () => {
+    setSaving(true);
+    try { await onboardingApi.saveOnboarding(true, answers); onComplete(); }
+    catch { toast('Could not continue', 'Try again.', 'error'); }
+    finally { setSaving(false); }
   };
 
   const next = async () => {
@@ -205,8 +213,8 @@ export const OnboardingScreen: React.FC<Props> = ({ onComplete, mode = 'onboardi
               <View style={styles.flex}><Field label="Usual cycle" value={String(value.avg_cycle_length || '')} onChangeText={(text) => setSection('avg_cycle_length', text.replace(/\D/g, ''))} placeholder="28 days" keyboardType="numeric" /></View>
               <View style={styles.flex}><Field label="Usual period" value={String(value.avg_period_length || '')} onChangeText={(text) => setSection('avg_period_length', text.replace(/\D/g, ''))} placeholder="5 days" keyboardType="numeric" /></View>
             </View>
-            <Text style={styles.helper}>Your estimates can change as Sadé learns from the periods you log.</Text>
-          </> : <View style={styles.softNote}><Text style={styles.softNoteText}>Cycle tracking will stay hidden from your journey until you choose to add it.</Text></View>}
+            <Text style={styles.helper}>Cycle dates are estimates.</Text>
+          </> : <View style={styles.softNote}><Text style={styles.softNoteText}>You can add cycle details later.</Text></View>}
         </>;
       case 'pain_profile':
         return <>
@@ -216,7 +224,7 @@ export const OnboardingScreen: React.FC<Props> = ({ onComplete, mode = 'onboardi
           {painOptions.map((item) => <Choice key={item} label={item} selected={(value.symptoms || []).includes(item)} onPress={() => toggle('symptoms', item, 'No regular pain')} />)}
         </>;
       case 'health_conditions':
-        return <>{healthOptions.map((item) => <Choice key={item} label={item} selected={(value.selected || []).includes(item)} onPress={() => toggle('selected', item, 'None of these')} />)}<Text style={styles.privacy}>Your health information is private and is used to personalize your experience—not to diagnose you.</Text></>;
+        return <>{healthOptions.map((item) => <Choice key={item} label={item} selected={(value.selected || []).includes(item)} onPress={() => toggle('selected', item, 'None of these')} />)}<Text style={styles.privacy}>Select any that apply.</Text></>;
       case 'lifestyle':
         return <>
           <Text style={styles.label}>How active are you most weeks?</Text>
@@ -236,14 +244,15 @@ export const OnboardingScreen: React.FC<Props> = ({ onComplete, mode = 'onboardi
 
   return <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
     <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-      <View style={styles.topRow}><Text style={styles.brand}>{mode === 'careJourney' ? 'My Care Journey' : 'Sadé'}</Text><View style={styles.topActions}><Text style={styles.stepText}>{step + 1} of {sections.length}</Text>{mode === 'careJourney' ? <TouchableOpacity style={styles.closeJourney} onPress={onComplete}><MaterialCommunityIcons name="close" size={20} color={COLORS.primary} /></TouchableOpacity> : null}</View></View>
+      <View style={styles.topRow}><Text style={styles.brand}>{mode === 'careJourney' ? 'Health baseline' : 'Sadé'}</Text><View style={styles.topActions}><Text style={styles.stepText}>{step + 1} of {sections.length}</Text>{mode === 'careJourney' ? <TouchableOpacity style={styles.closeJourney} onPress={onComplete}><MaterialCommunityIcons name="close" size={20} color={COLORS.primary} /></TouchableOpacity> : null}</View></View>
       <View style={styles.progressTrack}><View style={[styles.progressFill, { width: `${((step + 1) / sections.length) * 100}%` }]} /></View>
       <View style={styles.heroIcon}><MaterialCommunityIcons name={copy.icon} size={30} color={COLORS.primaryContainer} /></View>
-      <Text style={styles.eyebrow}>{copy.eyebrow}</Text><Text style={styles.title}>{copy.title}</Text><Text style={styles.intro}>{copy.intro}</Text>
+      {mode === 'onboarding' ? <TouchableOpacity accessibilityRole="button" disabled={saving} onPress={skip} style={{minHeight:44,justifyContent:'center',alignSelf:'flex-end'}}><Text style={{color:COLORS.primary,fontWeight:'600'}}>Set up later</Text></TouchableOpacity> : null}
+      <Text style={styles.eyebrow}>{copy.eyebrow}</Text><Text style={styles.title}>{copy.title}</Text>
       <View style={styles.form}>{renderSection()}</View>
       <View style={styles.actions}>
         {step > 0 ? <TouchableOpacity style={styles.backButton} onPress={() => setStep((value) => value - 1)}><MaterialCommunityIcons name="arrow-left" size={20} color={COLORS.primary} /><Text style={styles.backText}>Back</Text></TouchableOpacity> : <View />}
-        <TouchableOpacity style={[styles.primaryButton, saving && styles.disabled]} onPress={next} disabled={saving}>{saving ? <ActivityIndicator color="#FFFFFF" /> : <><Text style={styles.primaryButtonText}>{step === sections.length - 1 ? (mode === 'careJourney' ? 'Save my journey' : 'Enter my space') : 'Continue'}</Text><MaterialCommunityIcons name="arrow-right" size={19} color="#FFFFFF" /></>}</TouchableOpacity>
+        <TouchableOpacity style={[styles.primaryButton, saving && styles.disabled]} onPress={next} disabled={saving}>{saving ? <ActivityIndicator color="#FFFFFF" /> : <><Text style={styles.primaryButtonText}>{step === sections.length - 1 ? (mode === 'careJourney' ? 'Save details' : 'Continue to Sadé') : 'Continue'}</Text><MaterialCommunityIcons name="arrow-right" size={19} color="#FFFFFF" /></>}</TouchableOpacity>
       </View>
     </ScrollView>
   </KeyboardAvoidingView>;

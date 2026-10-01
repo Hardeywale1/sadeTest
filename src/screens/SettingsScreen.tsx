@@ -77,11 +77,11 @@ export const SettingsScreen: React.FC<{ onEditOnboarding?: () => void; onManageG
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Account &amp; Security</Text>
-      <Text style={styles.subtitle}>Manage your profile, active sessions &amp; account security.</Text>
+      <Text style={styles.title}>Your profile</Text>
+
 
       {/* Profile Section */}
-      <Text style={styles.sectionHeader}>Profile Information</Text>
+      <Text style={styles.sectionHeader}>Profile</Text>
       <View style={styles.card}>
         <Text style={styles.label}>Email Address</Text>
         <Text style={styles.readOnlyText}>{user?.email}</Text>
@@ -101,15 +101,15 @@ export const SettingsScreen: React.FC<{ onEditOnboarding?: () => void; onManageG
       <Text style={styles.sectionHeader}>Personalization</Text>
       <TouchableOpacity style={styles.personalizationCard} onPress={onEditOnboarding}>
         <View style={styles.personalizationCopy}>
-          <Text style={styles.personalizationTitle}>My care journey</Text>
-          <Text style={styles.personalizationText}>Review your cycle details, health context, goals and interests.</Text>
+          <Text style={styles.personalizationTitle}>Health baseline</Text>
+          <Text style={styles.personalizationText}>Cycle, health and interests</Text>
         </View>
         <Text style={styles.chevron}>›</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.personalizationCard} onPress={onManageGoals}>
         <View style={styles.personalizationCopy}>
           <Text style={styles.personalizationTitle}>Goals &amp; progress</Text>
-          <Text style={styles.personalizationText}>Choose preset goals and update the progress you have made.</Text>
+          <Text style={styles.personalizationText}>Your personal goals</Text>
         </View>
         <Text style={styles.chevron}>›</Text>
       </TouchableOpacity>

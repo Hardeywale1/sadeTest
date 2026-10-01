@@ -201,8 +201,8 @@ export const CommunityScreen: React.FC = () => {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.title}>The Sadé Lounge</Text>
-          <Text style={styles.subtitle}>Connect with clans, shared wisdom &amp; daily chatter.</Text>
+          <Text style={styles.title}>Sadé Folk</Text>
+
         </View>
 
         {/* Tab Selector */}
@@ -211,19 +211,19 @@ export const CommunityScreen: React.FC = () => {
             style={[styles.tabBtn, tab === 'lounge' && styles.tabBtnActive]}
             onPress={() => setTab('lounge')}
           >
-            <Text style={[styles.tabText, tab === 'lounge' && styles.tabTextActive]}>Lounge Posts</Text>
+            <Text style={[styles.tabText, tab === 'lounge' && styles.tabTextActive]}>Posts</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.tabBtn, tab === 'clans' && styles.tabBtnActive]}
             onPress={() => setTab('clans')}
           >
-            <Text style={[styles.tabText, tab === 'clans' && styles.tabTextActive]}>Clans Roster</Text>
+            <Text style={[styles.tabText, tab === 'clans' && styles.tabTextActive]}>Groups</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.tabBtn, tab === 'gossip' && styles.tabBtnActive]}
             onPress={() => setTab('gossip')}
           >
-            <Text style={[styles.tabText, tab === 'gossip' && styles.tabTextActive]}>Tea &amp; Gossip</Text>
+            <Text style={[styles.tabText, tab === 'gossip' && styles.tabTextActive]}>Stories</Text>
           </TouchableOpacity>
         </View>
 
@@ -234,7 +234,7 @@ export const CommunityScreen: React.FC = () => {
           <View>
             <TouchableOpacity style={styles.newPostBanner} onPress={openComposer}>
               <MaterialCommunityIcons name="pencil-outline" size={17} color={COLORS.primaryContainer} />
-              <Text style={styles.newPostBannerText}>Share a thought with the lounge...</Text>
+              <Text style={styles.newPostBannerText}>Share a thought...</Text>
             </TouchableOpacity>
 
             {posts.length === 0 ? (
@@ -307,7 +307,7 @@ export const CommunityScreen: React.FC = () => {
                   <View style={styles.clanFooter}>
                     <Text style={styles.clanMembers}>👥 {c.member_count} Members</Text>
                     <TouchableOpacity style={styles.joinBtn} onPress={() => handleJoinClan(c.id)}>
-                      <Text style={styles.joinBtnText}>Join Clan</Text>
+                      <Text style={styles.joinBtnText}>Join group</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -321,12 +321,12 @@ export const CommunityScreen: React.FC = () => {
           <View>
             {gossips.length === 0 ? (
               <View style={styles.emptyBox}>
-                <Text style={styles.emptyText}>No community gossips trending right now.</Text>
+                <Text style={styles.emptyText}>No stories yet.</Text>
               </View>
             ) : (
               gossips.map((g) => (
                 <View key={g.id} style={styles.gossipCard}>
-                  <Text style={styles.gossipBadge}>LUTEAL VIBE CHECK</Text>
+
                   <Text style={styles.gossipHeadline}>"{g.headline}"</Text>
                   <Text style={styles.gossipStory}>{g.story}</Text>
                   <Text style={styles.gossipVibe}>Vibe Check: {g.vibe_check}</Text>
@@ -341,7 +341,7 @@ export const CommunityScreen: React.FC = () => {
       <Modal visible={createPostVisible} animationType="slide" transparent onRequestClose={() => setCreatePostVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>New Lounge Post</Text>
+            <Text style={styles.modalTitle}>New post</Text>
             {postError ? <Text style={styles.inlineError}>{postError}</Text> : null}
             <TextInput
               style={styles.input}
@@ -377,7 +377,7 @@ export const CommunityScreen: React.FC = () => {
                 <Text style={styles.cancelBtnText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.saveBtn, posting && styles.disabled]} onPress={handleCreatePost} disabled={posting}>
-                <Text style={styles.saveBtnText}>{posting ? 'Posting…' : 'Post to Lounge'}</Text>
+                <Text style={styles.saveBtnText}>{posting ? 'Posting…' : 'Publish'}</Text>
               </TouchableOpacity>
             </View>
           </View>

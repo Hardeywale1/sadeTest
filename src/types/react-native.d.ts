@@ -1,4 +1,6 @@
 declare module 'react-native' {
+  export const Linking: any;
+  export const Share: any;
   export const View: any;
   export const Text: any;
   export const TextInput: any;
@@ -12,6 +14,7 @@ declare module 'react-native' {
   export const StatusBar: any;
   export const KeyboardAvoidingView: any;
   export const Alert: any;
+  export const useWindowDimensions: () => { width: number; height: number; scale: number; fontScale: number };
   export const Platform: { OS: 'ios' | 'android' | 'web'; select: (obj: any) => any };
 }
 

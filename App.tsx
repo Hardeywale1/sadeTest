@@ -20,18 +20,21 @@ import { JournalScreen } from './src/screens/JournalScreen';
 import { CommunityScreen } from './src/screens/CommunityScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { OnboardingScreen } from './src/screens/OnboardingScreen';
+import { CareScreen } from './src/screens/CareScreen';
 import { GoalsScreen } from './src/screens/GoalsScreen';
+import { LandingScreen } from './src/screens/LandingScreen';
 import { onboardingApi } from './src/api/profileApi';
 import { COLORS } from './src/theme/colors';
 
-type TabType = 'dashboard' | 'cycle' | 'journal' | 'community' | 'settings';
+type TabType = 'dashboard' | 'cycle' | 'journal' | 'community' | 'care' | 'settings';
 
 const TAB_SUBTITLE: Record<TabType, string> = {
-  dashboard: 'HOME',
-  cycle: 'TRACK',
-  journal: 'JOURNAL',
-  community: 'LOUNGE',
-  settings: 'ACCOUNT',
+  dashboard: 'Home',
+  cycle: 'Track',
+  journal: 'Journal',
+  community: 'Community',
+  care: 'Care',
+  settings: 'Profile',
 };
 
 /**
@@ -60,9 +63,12 @@ const useWebViewportFix = () => {
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
+  const [publicScreen, setPublicScreen] = useState<'landing' | 'auth'>('landing');
   const [currentTab, setCurrentTab] = useState<TabType>('dashboard');
   const [onboardingState, setOnboardingState] = useState<'checking' | 'required' | 'complete'>('checking');
   const [careJourneyOpen, setCareJourneyOpen] = useState(false);
+  const [careEntry,setCareEntry] = useState<{mode:'home'|'concern';id?:string}>({mode:'home'});
+  const openCare=(mode:'home'|'concern',id?:string)=>{setCareEntry({mode,id});setCurrentTab('care');};
   const [goalsOpen, setGoalsOpen] = useState(false);
   const [trackerView, setTrackerView] = useState<'today' | 'cycle'>('today');
 
@@ -77,6 +83,7 @@ const AppContent: React.FC = () => {
   const selectTab = (tab: TabType) => {
     setCareJourneyOpen(false);
     setGoalsOpen(false);
+    if(tab==='care')setCareEntry({mode:'home'});
     setCurrentTab(tab);
   };
 
@@ -100,7 +107,10 @@ const AppContent: React.FC = () => {
   }
 
   if (!isAuthenticated) {
-    return <AuthScreen />;
+    if (publicScreen === 'auth') {
+      return <AuthScreen onBack={() => setPublicScreen('landing')} />;
+    }
+    return <LandingScreen onStart={() => setPublicScreen('auth')} onSignIn={() => setPublicScreen('auth')} />;
   }
 
   if (onboardingState === 'checking') {
@@ -127,9 +137,11 @@ const AppContent: React.FC = () => {
     }
     switch (currentTab) {
       case 'dashboard':
-        return <DashboardScreen onNavigate={navigateFromDashboard} />;
+        return <DashboardScreen onNavigate={navigateFromDashboard} onCare={openCare} />;
       case 'cycle':
         return <TrackerScreen key={trackerView} initialView={trackerView} />;
+      case 'care':
+        return <CareScreen key={`${careEntry.mode}-${careEntry.id||''}`} initialMode={careEntry.mode} initialCaseID={careEntry.id}/>;
       case 'journal':
         return <JournalScreen />;
       case 'community':
@@ -137,11 +149,11 @@ const AppContent: React.FC = () => {
       case 'settings':
         return <SettingsScreen onEditOnboarding={() => setCareJourneyOpen(true)} onManageGoals={() => setGoalsOpen(true)} />;
       default:
-        return <DashboardScreen onNavigate={navigateFromDashboard} />;
+        return <DashboardScreen onNavigate={navigateFromDashboard} onCare={openCare} />;
     }
   };
 
-  const headerSubtitle = careJourneyOpen ? 'CARE JOURNEY' : goalsOpen ? 'GOALS' : TAB_SUBTITLE[currentTab];
+  const headerSubtitle = careJourneyOpen ? 'Health' : goalsOpen ? 'Goals' : TAB_SUBTITLE[currentTab];
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -161,10 +173,10 @@ const AppContent: React.FC = () => {
         <View style={styles.bottomNav}>
           {([
             ['dashboard', 'home-variant-outline', 'home-variant', 'Home'],
-            ['cycle', 'chart-timeline-variant', 'chart-timeline-variant', 'Track'],
+            ['cycle', 'calendar-blank-outline', 'calendar-blank', 'Track'],
+            ['care', 'medical-bag', 'medical-bag', 'Care'],
             ['journal', 'book-open-page-variant-outline', 'book-open-page-variant', 'Journal'],
-            ['community', 'account-group-outline', 'account-group', 'Lounge'],
-            ['settings', 'account-circle-outline', 'account-circle', 'Account'],
+            ['community', 'account-group-outline', 'account-group', 'Community'],
           ] as const).map(([tab, icon, activeIcon, label]) => {
             const active = currentTab === tab && !careJourneyOpen && !goalsOpen;
             return (

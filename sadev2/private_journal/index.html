@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<!-- Sadé Netlify prototype route: private_journal --><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"><meta content="mobile_tab" name="shell-type"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..700;1,400..700&amp;family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{width:100vw;margin:0;padding:0;background-color:#fff8f8;}body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"primary-fixed-dim":"#ffb2b9","surface-container-lowest":"#ffffff","on-primary":"#ffffff","outline":"#8c7072","error":"#ba1a1a","surface-container":"#faeaec","primary-container":"#87002b","on-primary-fixed":"#400010","on-background":"#22191b","on-surface-variant":"#584143","on-tertiary":"#ffffff","on-secondary-fixed-variant":"#4c4543","surface-variant":"#efdfe1","surface-container-high":"#f5e4e7","surface-bright":"#fff8f8","secondary-container":"#ece0dd","tertiary-fixed":"#e9e1da","surface-container-highest":"#efdfe1","secondary-fixed":"#ece0dd","on-secondary-fixed":"#201a19","secondary-fixed-dim":"#cfc4c1","on-tertiary-fixed-variant":"#4a4641","on-secondary-container":"#6b6360","outline-variant":"#e0bfc1","on-secondary":"#ffffff","on-error-container":"#93000a","on-surface":"#22191b","on-primary-fixed-variant":"#8f0930","primary-fixed":"#ffdadc","on-tertiary-fixed":"#1e1b17","surface-tint":"#b02946","inverse-on-surface":"#fdedef","on-primary-container":"#ff8b99","tertiary-fixed-dim":"#ccc5bf","error-container":"#ffdad6","on-error":"#ffffff","surface":"#fff8f8","tertiary-container":"#45413c","inverse-primary":"#ffb2b9","surface-container-low":"#fff0f2","background":"#fff8f8","on-tertiary-container":"#b3ada7","inverse-surface":"#372e30","primary":"#5e001b","surface-dim":"#e6d6d9","tertiary":"#2e2b27","secondary":"#655d5b"},borderRadius:{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},spacing:{"space-sm":"0.5rem","gutter-sm":"0.75rem","space-md":"1rem","space-xl":"2rem","gutter":"1rem","margin-tablet":"2rem","space-xs":"0.25rem","space-lg":"1.5rem","margin":"1.25rem"},fontFamily:{"display-lg-mobile":["Playfair Display"],"label-sm":["Plus Jakarta Sans"],"display-lg":["Playfair Display"],"headline-lg":["Playfair Display"],"label-md":["Plus Jakarta Sans"],"title-lg":["Plus Jakarta Sans"],"title-md":["Plus Jakarta Sans"],"headline-md":["Playfair Display"],"label-lg":["Plus Jakarta Sans"],"body-md":["Plus Jakarta Sans"],"body-sm":["Plus Jakarta Sans"],"body-lg":["Plus Jakarta Sans"],"headline-sm":["Playfair Display"]},fontSize:{"display-lg-mobile":["32px",{lineHeight:"40px",letterSpacing:"-0.01em",fontWeight:"600"}],"label-sm":["11px",{lineHeight:"14px",letterSpacing:"0.04em",fontWeight:"500"}],"display-lg":["40px",{lineHeight:"48px",letterSpacing:"-0.02em",fontWeight:"600"}],"headline-lg":["28px",{lineHeight:"36px",letterSpacing:"-0.01em",fontWeight:"600"}],"label-md":["12px",{lineHeight:"16px",letterSpacing:"0.02em",fontWeight:"600"}],"title-lg":["18px",{lineHeight:"26px",fontWeight:"600"}],"title-md":["16px",{lineHeight:"24px",fontWeight:"600"}],"headline-md":["24px",{lineHeight:"32px",fontWeight:"500"}],"label-lg":["14px",{lineHeight:"20px",letterSpacing:"0.01em",fontWeight:"600"}],"body-md":["14px",{lineHeight:"21px",fontWeight:"400"}],"body-sm":["12px",{lineHeight:"18px",fontWeight:"400"}],"body-lg":["16px",{lineHeight:"24px",fontWeight:"400"}],"headline-sm":["20px",{lineHeight:"28px",fontWeight:"500"}]}}}}</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="theme-color" content="#7A0026">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20rx='16'%20fill='%237A0026'/%3E%3Cpath%20d='M32%2045C20%2042%2014%2034%2015%2023c8%200%2014%204%2017%2010%203-6%209-10%2017-10%201%2011-5%2019-17%2022Zm0-12c-6-5-7-12%200-20%207%208%206%2015%200%2020Z'%20fill='%23FFF7F5'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/assets/prototype.css">
+
+</head><body class="bg-surface text-on-surface font-body-md text-body-md flex flex-col min-h-screen"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/85 backdrop-blur-xl shadow-[0_1px_12px_rgba(34,25,27,0.03)]"><div class="h-16 px-margin flex items-center justify-between"><div class="flex items-center gap-space-sm"><img alt="Brand logo design with the text _Sadé_ in deep maroon red font on a white background, featuring a small elegant lotus flower icon positioned above the text, minimalist and modern style, clean professional branding.png" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1UCUQJrR57NB_Ix15tM7LWAj5WlUmOH5hPuVgbzGCyybehCUBDKITMTsyPJEGP-lEgBRQGk4e7YFaqIClmNUMGd8XYlaDxIYmAWTqpfUjTMo4Wb-05iulGFx8uR96ApFl93FAL-5gh2whddYwYkN4u6_W3y5V_qmWt81RVuWjrDH2la4axJa9Fwr1_daEXGQLkx-gdF34QuiSakfh7wUPgoqQFYflbJc4IRxzLbCYUH8yMNZMAa7YWXt_6mYfhIsw-qAQ8hA1_0yA"><span class="font-headline-sm text-headline-sm text-primary tracking-tight font-serif">Sadé</span><span class="font-label-sm text-label-sm text-on-surface-variant font-medium opacity-60 hidden">Journal</span></div><div class="flex items-center gap-space-sm"><a class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface-variant hover:text-primary transition-colors" data-path="notifications" href="#"><span class="material-symbols-outlined text-[22px]">notifications_none</span></a><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 pb-24 bg-surface"><div class="flex flex-col w-full px-margin pb-8 space-y-space-lg">
+<!-- Editorial Top Context -->
+<div class="flex flex-col pt-space-md space-y-space-xs">
+<div class="flex items-center justify-between">
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container text-primary">
+<span class="material-symbols-outlined text-[14px]">lock</span>
+<span class="font-label-sm text-label-sm uppercase tracking-wider">Private</span>
+</div>
+</div>
+<h1 class="font-headline-md text-headline-md text-primary tracking-tight font-serif pt-1">
+      Your private health notes
+    </h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Keep private health notes.</p>
+<div class="flex items-center gap-1.5 pt-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-primary">shield</span>
+<span class="font-label-sm text-label-sm">Private unless you choose to share.</span>
+</div>
+</div>
+<!-- Primary Floating Action / Dominant CTA -->
+<button class="w-full h-[52px] rounded-full bg-primary-container text-on-primary flex items-center justify-center gap-2 shadow-md active:scale-[0.99] transition-transform" type="button">
+<span class="material-symbols-outlined text-[20px]">add</span>
+<span class="font-label-lg text-label-lg font-semibold">New entry</span>
+</button>
+<!-- Interactive Prompt Card with Soft Warm Visual Inset -->
+<div class="relative overflow-hidden rounded-xl bg-surface-container-low p-space-md shadow-sm">
+<div class="absolute -right-6 -bottom-6 w-28 h-28 rounded-full bg-surface-container opacity-60 pointer-events-none"></div>
+<div class="relative z-10 flex flex-col space-y-space-xs">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">psychology_alt</span>
+<h2 class="font-title-md text-title-md text-on-surface font-serif">How are you feeling today?</h2>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2">Write what matters today.</p>
+<div class="pt-2">
+<button class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-surface-container-lowest text-primary font-label-md text-label-md shadow-sm active:bg-surface-container transition-colors" type="button">
+<span>Write an entry</span>
+<span class="material-symbols-outlined text-[16px]">edit</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Search & Category Filters -->
+<div class="flex flex-col space-y-space-sm">
+<!-- Search Bar -->
+<div class="relative w-full">
+<span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-outline">
+<span class="material-symbols-outlined text-[20px]">search</span>
+</span>
+<input class="w-full h-11 pl-10 pr-4 rounded-xl bg-surface-container-lowest text-on-surface font-body-sm text-body-sm placeholder:text-outline focus:outline-none focus:bg-surface-container-low transition-colors shadow-sm" id="journalSearch" placeholder="Search journal notes..." type="search">
+</div>
+<!-- Filter Pills (Scrollable horizontally) -->
+<div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1" id="filterContainer">
+<button class="filter-chip px-3.5 py-1.5 rounded-full text-label-md font-label-md bg-primary-container text-on-primary shadow-sm whitespace-nowrap transition-all" data-filter="All" type="button">
+        All
+      </button>
+<button class="filter-chip px-3.5 py-1.5 rounded-full text-label-md font-label-md bg-surface-container text-on-surface-variant hover:text-primary whitespace-nowrap transition-all" data-filter="Mood" type="button">
+        Mood
+      </button>
+<button class="filter-chip px-3.5 py-1.5 rounded-full text-label-md font-label-md bg-surface-container text-on-surface-variant hover:text-primary whitespace-nowrap transition-all" data-filter="Symptoms" type="button">
+        Symptoms
+      </button>
+<button class="filter-chip px-3.5 py-1.5 rounded-full text-label-md font-label-md bg-surface-container text-on-surface-variant hover:text-primary whitespace-nowrap transition-all" data-filter="Appointment" type="button">
+        Appointment
+      </button>
+<button class="filter-chip px-3.5 py-1.5 rounded-full text-label-md font-label-md bg-surface-container text-on-surface-variant hover:text-primary whitespace-nowrap transition-all" data-filter="Personal" type="button">
+        Personal
+      </button>
+</div>
+</div>
+<!-- Recent Entries Section -->
+<div class="flex flex-col space-y-space-sm pt-1">
+<div class="flex items-center justify-between pb-1">
+<h3 class="font-label-lg text-label-lg text-on-surface uppercase tracking-wider text-xs">Recent entries</h3>
+</div>
+<!-- Entry Card 1 -->
+<article class="journal-card w-full rounded-xl bg-surface-container-lowest p-space-md shadow-sm flex flex-col space-y-2 active:bg-surface-container-low transition-colors" data-tags="Symptoms,Personal">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="px-2 py-0.5 rounded-full bg-surface-container text-primary font-label-sm text-label-sm">Symptoms</span>
+<span class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">Personal</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-outline">lock</span>
+</div>
+<div class="flex flex-col space-y-0.5">
+<h4 class="font-title-md text-title-md text-on-surface font-serif">Pelvic cramp after morning walk</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2">
+          Mild discomfort subsided after resting. Saved for your next appointment.
+        </p>
+</div>
+<div class="flex items-center justify-between pt-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Yesterday, 4:15 PM • Private</span>
+<span class="material-symbols-outlined text-[18px] text-primary">chevron_right</span>
+</div>
+</article>
+<!-- Entry Card 2 -->
+<article class="journal-card w-full rounded-xl bg-surface-container-lowest p-space-md shadow-sm flex flex-col space-y-2 active:bg-surface-container-low transition-colors" data-tags="Appointment">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="px-2 py-0.5 rounded-full bg-surface-container text-primary font-label-sm text-label-sm">Appointment</span>
+</div>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-container-high text-primary font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[12px]">clinical_notes</span>
+<span>Appointment</span>
+</span>
+</div>
+<div class="flex flex-col space-y-0.5">
+<h4 class="font-title-md text-title-md text-on-surface font-serif">Questions for Dr. Danjuma</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2">
+          Clarify dosage schedule and ultrasound referral dates.
+        </p>
+</div>
+<div class="flex items-center justify-between pt-1">
+<span class="font-label-sm text-label-sm text-primary font-medium">21 Oct • Included in summary</span>
+<span class="material-symbols-outlined text-[18px] text-primary">chevron_right</span>
+</div>
+</article>
+<!-- Entry Card 3 -->
+<article class="journal-card w-full rounded-xl bg-surface-container-lowest p-space-md shadow-sm flex flex-col space-y-2 active:bg-surface-container-low transition-colors" data-tags="Mood">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="px-2 py-0.5 rounded-full bg-surface-container text-primary font-label-sm text-label-sm">Mood</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-outline">lock</span>
+</div>
+<div class="flex flex-col space-y-0.5">
+<h4 class="font-title-md text-title-md text-on-surface font-serif">Luteal energy shift</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2">
+          Noticed low energy and brain fog. Hydrated and rested early.
+        </p>
+</div>
+<div class="flex items-center justify-between pt-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant">19 Oct • Private</span>
+<span class="material-symbols-outlined text-[18px] text-primary">chevron_right</span>
+</div>
+</article>
+</div>
+<!-- Discreet Urgent Support Section -->
+<div class="pt-4 border-none">
+<div class="rounded-xl bg-surface-container-low p-4 flex flex-col space-y-2">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-primary">support_agent</span>
+<span class="font-label-md text-label-md text-on-surface">Need urgent help?</span>
+</div>
+<button class="font-label-md text-label-md text-primary font-semibold flex items-center" id="toggleUrgentBtn" type="button">
+<span>Learn more</span>
+<span class="material-symbols-outlined text-[16px] transition-transform" id="urgentChevron">expand_more</span>
+</button>
+</div>
+<!-- Expandable Drawer -->
+<div class="hidden flex flex-col pt-2 space-y-2 text-on-surface-variant font-body-sm text-body-sm" id="urgentDrawer">
+<p>For severe symptoms, seek urgent care.</p>
+<div class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-lowest">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface font-semibold">Emergency support</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Use emergency services available in your location</span>
+</div>
+<a class="px-3 py-1 rounded-full bg-primary text-on-primary font-label-sm text-label-sm" href="tel:112">Call</a>
+</div>
+<div class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-lowest">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface font-semibold">Sadé support</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Product and appointment help</span>
+</div>
+<button class="px-3 py-1 rounded-full bg-surface-container text-primary font-label-sm text-label-sm" type="button">Connect</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+  (function() {
+    // 1. Highlight the Journal navigation tab in the App Shell
+    const journalTab = document.querySelector('nav a[data-path="journal"]');
+    if (journalTab) {
+      document.querySelectorAll('nav a').forEach(el => {
+        el.classList.remove('text-primary');
+        el.classList.add('text-on-surface-variant');
+        const icon = el.querySelector('.material-symbols-outlined');
+        if (icon) icon.style.fontVariationSettings = "'FILL' 0";
+      });
+      journalTab.classList.remove('text-on-surface-variant');
+      journalTab.classList.add('text-primary');
+      const activeIcon = journalTab.querySelector('.material-symbols-outlined');
+      if (activeIcon) activeIcon.style.fontVariationSettings = "'FILL' 1";
+    }
+
+    // 2. Interactive Search & Filtering
+    const searchInput = document.getElementById('journalSearch');
+    const filterButtons = document.querySelectorAll('.filter-chip');
+    const cards = document.querySelectorAll('.journal-card');
+    let currentFilter = 'All';
+
+    function filterCards() {
+      const query = (searchInput.value || '').toLowerCase().trim();
+      cards.forEach(card => {
+        const text = card.textContent.toLowerCase();
+        const tags = (card.getAttribute('data-tags') || '').split(',');
+        const matchesQuery = query === '' || text.includes(query);
+        const matchesFilter = currentFilter === 'All' || tags.includes(currentFilter);
+
+        if (matchesQuery && matchesFilter) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterButtons.forEach(b => {
+          b.className = 'filter-chip px-3.5 py-1.5 rounded-full text-label-md font-label-md bg-surface-container text-on-surface-variant hover:text-primary whitespace-nowrap transition-all';
+        });
+        btn.className = 'filter-chip px-3.5 py-1.5 rounded-full text-label-md font-label-md bg-primary-container text-on-primary shadow-sm whitespace-nowrap transition-all';
+        currentFilter = btn.getAttribute('data-filter') || 'All';
+        filterCards();
+      });
+    });
+
+    if (searchInput) {
+      searchInput.addEventListener('input', filterCards);
+    }
+
+    // 3. Expandable Urgent Help Section
+    const urgentBtn = document.getElementById('toggleUrgentBtn');
+    const urgentDrawer = document.getElementById('urgentDrawer');
+    const urgentChevron = document.getElementById('urgentChevron');
+
+    if (urgentBtn && urgentDrawer) {
+      urgentBtn.addEventListener('click', () => {
+        const isHidden = urgentDrawer.classList.contains('hidden');
+        if (isHidden) {
+          urgentDrawer.classList.remove('hidden');
+          urgentChevron.classList.add('rotate-180');
+        } else {
+          urgentDrawer.classList.add('hidden');
+          urgentChevron.classList.remove('rotate-180');
+        }
+      });
+    }
+  })();
+</script></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-4px_20px_rgba(94,0,27,0.04)]" data-active-classes="text-primary [&amp;&gt;span:first-child]:font-variation-settings-'FILL'_1"><div class="flex justify-around items-center h-16 px-gutter"><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] gap-0.5 text-on-surface-variant transition-colors hover:text-primary" data-path="home" href="#"><span class="material-symbols-outlined text-[22px]">spa</span><span class="font-label-sm text-label-sm">Home</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] gap-0.5 text-on-surface-variant transition-colors hover:text-primary" data-path="track" href="#"><span class="material-symbols-outlined text-[22px]">calendar_today</span><span class="font-label-sm text-label-sm">Track</span></a><a aria-current="page" class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] gap-0.5 transition-colors text-primary [&amp;&gt;span:first-child]:font-variation-settings-'FILL'_1" data-path="journal" href="#"><span class="material-symbols-outlined text-[22px]">edit_note</span><span class="font-label-sm text-label-sm">Journal</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] gap-0.5 text-on-surface-variant transition-colors hover:text-primary" data-path="folk" href="#"><span class="material-symbols-outlined text-[22px]">forum</span><span class="font-label-sm text-label-sm">Folk</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] gap-0.5 text-on-surface-variant transition-colors hover:text-primary" data-path="care" href="#"><span class="material-symbols-outlined text-[22px]">stethoscope</span><span class="font-label-sm text-label-sm">Care</span></a></div></nav>
+<script src="/assets/prototype-nav.js"></script>
+
+</body></html>

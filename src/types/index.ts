@@ -151,6 +151,11 @@ export interface PeriodLog {
 }
 
 export interface SymptomLog {
+  id?: string;
+  flow?: string;
+  pain_level?: number;
+  locations?: string[];
+  energy?: string;
   user_id: string;
   date: string;
   mood?: string;

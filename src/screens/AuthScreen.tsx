@@ -12,8 +12,9 @@ import {
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { COLORS } from '../theme/colors';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-export const AuthScreen: React.FC = () => {
+export const AuthScreen: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const { login, signup } = useAuth();
   const [isLoginTab, setIsLoginTab] = useState(true);
   const [email, setEmail] = useState('');
@@ -53,8 +54,14 @@ export const AuthScreen: React.FC = () => {
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.card}>
+          {onBack ? (
+            <TouchableOpacity style={styles.backButton} onPress={onBack} accessibilityLabel="Back to Sadé home">
+              <MaterialCommunityIcons name="arrow-left" size={19} color={COLORS.primary} />
+              <Text style={styles.backText}>Home</Text>
+            </TouchableOpacity>
+          ) : null}
           <Text style={styles.brandTitle}>Sadé</Text>
-          <Text style={styles.brandSubtitle}>Women's Health &amp; Wellness Space</Text>
+          <Text style={styles.brandSubtitle}>Your health, connected.</Text>
 
           {/* Toggle Bar */}
           <View style={styles.toggleBar}>
@@ -62,13 +69,13 @@ export const AuthScreen: React.FC = () => {
               style={[styles.toggleBtn, isLoginTab && styles.toggleBtnActive]}
               onPress={() => setIsLoginTab(true)}
             >
-              <Text style={[styles.toggleText, isLoginTab && styles.toggleTextActive]}>Login</Text>
+              <Text style={[styles.toggleText, isLoginTab && styles.toggleTextActive]}>Sign in</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.toggleBtn, !isLoginTab && styles.toggleBtnActive]}
               onPress={() => setIsLoginTab(false)}
             >
-              <Text style={[styles.toggleText, !isLoginTab && styles.toggleTextActive]}>Sign Up</Text>
+              <Text style={[styles.toggleText, !isLoginTab && styles.toggleTextActive]}>Create account</Text>
             </TouchableOpacity>
           </View>
 
@@ -77,10 +84,10 @@ export const AuthScreen: React.FC = () => {
 
           {!isLoginTab && (
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Display Name</Text>
+              <Text style={styles.label}>Name</Text>
               <TextInput
                 style={styles.input}
-                placeholder="e.g. Kemi Akindele"
+                placeholder="Your name"
                 placeholderTextColor="#A08C8C"
                 value={displayName}
                 onChangeText={setDisplayName}
@@ -89,7 +96,7 @@ export const AuthScreen: React.FC = () => {
           )}
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email Address</Text>
+            <Text style={styles.label}>Email</Text>
             <TextInput
               style={styles.input}
               placeholder="sade@example.com"
@@ -150,6 +157,19 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 20,
     elevation: 3,
+  },
+  backButton: {
+    minHeight: 40,
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  backText: {
+    color: COLORS.primary,
+    fontSize: 13,
+    fontWeight: '700',
   },
   brandTitle: {
     fontFamily: 'serif',

@@ -85,9 +85,9 @@ export const JournalScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.headerRow}>
           <View>
-            <Text style={styles.title}>My Journal</Text>
-            <Text style={styles.subtitle}>Reflect on your journey toward balance.</Text>
-            <Text style={styles.allowance}>{monthlyCount} of 20 reflections used this month</Text>
+            <Text style={styles.title}>Private journal</Text>
+
+            <Text style={styles.allowance}>{monthlyCount} of 20 entries this month</Text>
           </View>
           <TouchableOpacity style={[styles.addBtn, monthlyLimitReached && styles.disabled]} onPress={() => monthlyLimitReached ? toast('Monthly limit reached', 'Your next journal allowance starts next calendar month.', 'error') : setModalVisible(true)}>
             <Text style={styles.addBtnText}>+ New</Text>
@@ -96,7 +96,7 @@ export const JournalScreen: React.FC = () => {
 
         {entries.length === 0 ? (
           <View style={styles.emptyBox}>
-            <Text style={styles.emptyText}>No journal entries recorded yet.</Text>
+            <Text style={styles.emptyText}>No entries yet.</Text>
             <TouchableOpacity style={styles.createFirstBtn} onPress={() => setModalVisible(true)}>
               <Text style={styles.createFirstText}>Create your first entry</Text>
             </TouchableOpacity>
@@ -109,7 +109,7 @@ export const JournalScreen: React.FC = () => {
               onPress={() => setSelectedEntry(item)}
             >
               <Text style={styles.entryDate}>{new Date(item.created_at).toLocaleDateString()}</Text>
-              <Text style={styles.entryTitle}>{item.title || 'Untitled Reflection'}</Text>
+              <Text style={styles.entryTitle}>{item.title || 'Untitled entry'}</Text>
               <Text style={styles.entryBody} numberOfLines={2}>
                 {item.body}
               </Text>
@@ -123,7 +123,7 @@ export const JournalScreen: React.FC = () => {
       <Modal visible={modalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>New Reflection</Text>
+            <Text style={styles.modalTitle}>New entry</Text>
             <TextInput
               style={styles.input}
               placeholder="Title (optional)"
@@ -145,7 +145,7 @@ export const JournalScreen: React.FC = () => {
                 <Text style={styles.cancelBtnText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.saveBtn, saving && styles.disabled]} onPress={handleCreateEntry} disabled={saving}>
-                <Text style={styles.saveBtnText}>{saving ? 'Saving…' : 'Save Reflection'}</Text>
+                <Text style={styles.saveBtnText}>{saving ? 'Saving…' : 'Save entry'}</Text>
               </TouchableOpacity>
             </View>
           </View>
