@@ -10,10 +10,12 @@ declare module 'react-native' {
   export const SafeAreaView: any;
   export const Modal: any;
   export const ActivityIndicator: any;
+  export const Image: any;
   export const RefreshControl: any;
   export const StatusBar: any;
   export const KeyboardAvoidingView: any;
   export const Alert: any;
+  export const Animated: any;
   export const useWindowDimensions: () => { width: number; height: number; scale: number; fontScale: number };
   export const Platform: { OS: 'ios' | 'android' | 'web'; select: (obj: any) => any };
 }
@@ -35,4 +37,9 @@ declare module 'react-dom' {
     createPortal: (children: any, container: any, key?: string) => any;
   };
   export default ReactDOM;
+}
+
+declare module 'qrcode' {
+  const QRCode: { toDataURL(value: string, options?: Record<string, unknown>): Promise<string> };
+  export default QRCode;
 }

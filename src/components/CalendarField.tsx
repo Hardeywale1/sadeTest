@@ -23,11 +23,13 @@ export const CalendarField = ({
   label,
   value,
   onChange,
+  minimumDate,
   maximumDate,
 }: {
   label: string;
   value?: string;
   onChange: (date: string) => void;
+  minimumDate?: string;
   maximumDate?: string;
 }) => {
   const [visible, setVisible] = useState(false);
@@ -50,6 +52,7 @@ export const CalendarField = ({
 
   const moveMonth = (offset: number) => setMonth((current) => new Date(current.getFullYear(), current.getMonth() + offset, 1));
   const max = maximumDate ? parseISO(maximumDate) : undefined;
+  const min = minimumDate ? parseISO(minimumDate) : undefined;
 
   return (
     <View style={styles.field}>
@@ -74,7 +77,7 @@ export const CalendarField = ({
                 if (!day) return <View key={`blank-${index}`} style={styles.dayCell} />;
                 const candidate = new Date(month.getFullYear(), month.getMonth(), day);
                 const iso = toISO(candidate);
-                const disabled = !!max && candidate.getTime() > max.getTime();
+                const disabled = (!!max && candidate.getTime() > max.getTime()) || (!!min && candidate.getTime() < min.getTime());
                 const selected = value === iso;
                 return <TouchableOpacity key={iso} style={[styles.dayCell, selected && styles.selectedDay]} disabled={disabled} onPress={() => { onChange(iso); setVisible(false); }}>
                   <Text style={[styles.dayText, selected && styles.selectedDayText, disabled && styles.disabledDay]}>{day}</Text>

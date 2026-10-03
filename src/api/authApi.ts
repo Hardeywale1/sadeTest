@@ -7,6 +7,13 @@ export const authApi = {
     password: string;
     display_name: string;
     timezone?: string;
+    account_type?: 'patient' | 'laboratory' | 'clinician';
+    professional_title?: string;
+    medical_license_number?: string;
+    nin?: string;
+    bvn?: string;
+    license_document_url?: string;
+    identity_document_url?: string;
   }): Promise<AuthResponse> {
     const res = await apiClient.post<AuthResponse>('/v1/auth/signup', {
       timezone: 'Africa/Lagos',

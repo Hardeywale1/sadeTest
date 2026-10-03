@@ -14,6 +14,7 @@ export interface User {
   timezone: string;
   created_at: string;
   updated_at: string;
+  role: 'patient' | 'clinician' | 'lab_applicant' | 'lab' | 'admin';
 }
 
 export interface Session {
@@ -39,6 +40,19 @@ export interface Profile {
   gender_identity?: string;
   health_conditions?: string[];
   avatar_url?: string;
+  professional_title?: string;
+  medical_license_number?: string;
+  nin?: string;
+  bvn?: string;
+  license_document_url?: string;
+  identity_document_url?: string;
+  clinician_verification_status?: string;
+  location?: {
+    latitude: number;
+    longitude: number;
+    accuracy_meters?: number;
+    updated_at: string;
+  };
   created_at: string;
   updated_at: string;
 }
@@ -147,6 +161,14 @@ export interface PeriodLog {
   start_date: string;
   end_date?: string;
   flow_days: FlowDay[];
+  summary?: {
+    classification: 'normal' | 'irregular' | 'insufficient_history';
+    cycle_length_days?: number;
+    bleeding_days: number;
+    reasons: string[];
+    guidance: string;
+    generated_at: string;
+  };
   created_at: string;
 }
 

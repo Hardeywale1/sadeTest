@@ -14,12 +14,20 @@ import { useAuth } from '../context/AuthContext';
 import { COLORS } from '../theme/colors';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-export const AuthScreen: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
-  const { login, signup } = useAuth();
+type PortalRole = 'clinician' | 'lab';
+
+export const AuthScreen: React.FC<{ onBack?: () => void; portalRole?: PortalRole }> = ({ onBack, portalRole }) => {
+  const { login, signup, logout } = useAuth();
   const [isLoginTab, setIsLoginTab] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [professionalTitle, setProfessionalTitle] = useState('');
+  const [medicalLicenseNumber, setMedicalLicenseNumber] = useState('');
+  const [nin, setNin] = useState('');
+  const [bvn, setBvn] = useState('');
+  const [licenseDocumentURL, setLicenseDocumentURL] = useState('');
+  const [identityDocumentURL, setIdentityDocumentURL] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -28,16 +36,26 @@ export const AuthScreen: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       setErrorMessage('Please enter email and password');
       return;
     }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setErrorMessage('Enter a valid email address.');
+      return;
+    }
     setErrorMessage('');
     setLoading(true);
     try {
       if (isLoginTab) {
-        await login(email, password);
+        const signedInUser = await login(email, password);
+        if (portalRole && signedInUser.role !== portalRole && signedInUser.role !== 'admin' && !(portalRole === 'lab' && signedInUser.role === 'lab_applicant')) {
+          await logout();
+          setErrorMessage(`${portalRole === 'lab' ? 'Laboratory' : 'Clinician'} access is required for this portal.`);
+        }
       } else {
         // Fall back to the email local part rather than a generic label, so the
         // greeting reads as the person's own name from the first session.
         const fallbackName = email.split('@')[0].replace(/[._-]+/g, ' ').trim();
-        await signup(email, password, displayName.trim() || fallbackName);
+        await signup(email, password, displayName.trim() || fallbackName, portalRole === 'lab' ? 'laboratory' : portalRole === 'clinician' ? 'clinician' : 'patient', portalRole === 'clinician' ? {
+          professional_title: professionalTitle.trim(), medical_license_number: medicalLicenseNumber.trim(), nin: nin.trim(), bvn: bvn.trim(), license_document_url: licenseDocumentURL.trim(), identity_document_url: identityDocumentURL.trim(),
+        } : undefined);
       }
     } catch (err: any) {
       const msg = err.response?.data?.error || 'Authentication failed. Check details.';
@@ -61,7 +79,7 @@ export const AuthScreen: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             </TouchableOpacity>
           ) : null}
           <Text style={styles.brandTitle}>Sadé</Text>
-          <Text style={styles.brandSubtitle}>Your health, connected.</Text>
+          <Text style={styles.brandSubtitle}>{portalRole === 'clinician' ? 'Clinician portal' : portalRole === 'lab' ? 'Laboratory portal' : 'Your health, connected.'}</Text>
 
           {/* Toggle Bar */}
           <View style={styles.toggleBar}>
@@ -95,6 +113,15 @@ export const AuthScreen: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             </View>
           )}
 
+          {!isLoginTab && portalRole === 'clinician' ? <>
+            <View style={styles.inputGroup}><Text style={styles.label}>Professional title</Text><TextInput style={styles.input} placeholder="Doctor, gynaecologist, nurse" value={professionalTitle} onChangeText={setProfessionalTitle} /></View>
+            <View style={styles.inputGroup}><Text style={styles.label}>Medical licence number (optional)</Text><TextInput style={styles.input} value={medicalLicenseNumber} onChangeText={setMedicalLicenseNumber} /></View>
+            <View style={styles.inputGroup}><Text style={styles.label}>NIN (optional)</Text><TextInput style={styles.input} value={nin} onChangeText={setNin} secureTextEntry /></View>
+            <View style={styles.inputGroup}><Text style={styles.label}>BVN (optional)</Text><TextInput style={styles.input} value={bvn} onChangeText={setBvn} secureTextEntry /></View>
+            <View style={styles.inputGroup}><Text style={styles.label}>Licence document URL (optional)</Text><TextInput style={styles.input} autoCapitalize="none" value={licenseDocumentURL} onChangeText={setLicenseDocumentURL} /></View>
+            <View style={styles.inputGroup}><Text style={styles.label}>Identity document URL (optional)</Text><TextInput style={styles.input} autoCapitalize="none" value={identityDocumentURL} onChangeText={setIdentityDocumentURL} /></View>
+          </> : null}
+
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Email</Text>
             <TextInput
@@ -124,7 +151,7 @@ export const AuthScreen: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             {loading ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text style={styles.submitBtnText}>{isLoginTab ? 'Welcome Back' : 'Join Sadé'}</Text>
+              <Text style={styles.submitBtnText}>{isLoginTab ? (portalRole ? 'Open workspace' : 'Welcome Back') : portalRole === 'lab' ? 'Register laboratory' : portalRole === 'clinician' ? 'Create clinician account' : 'Join Sadé'}</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -191,6 +218,18 @@ const styles = StyleSheet.create({
     borderRadius: 99,
     padding: 4,
     marginBottom: 20,
+  },
+  portalNotice: {
+    backgroundColor: COLORS.surfaceContainerLow,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 20,
+  },
+  portalNoticeText: {
+    color: COLORS.onSurfaceVariant,
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: 'center',
   },
   toggleBtn: {
     flex: 1,

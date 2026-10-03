@@ -10,14 +10,15 @@ interface AuthContextType {
   isAuthenticated: boolean;
   /** Display name to greet the user with, already trimmed to a first name. */
   greetingName: string;
-  login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, displayName: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
+  signup: (email: string, password: string, displayName: string, accountType?: 'patient' | 'laboratory' | 'clinician', clinician?: ClinicianSignup) => Promise<void>;
   logout: () => Promise<void>;
   /** Re-reads the profile so a renamed account is reflected everywhere. */
   refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export type ClinicianSignup = { professional_title?: string; medical_license_number?: string; nin?: string; bvn?: string; license_document_url?: string; identity_document_url?: string };
 
 /**
  * Falls back through display name → email local part so the greeting is always
@@ -76,13 +77,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (email: string, password: string) => {
     const res = await authApi.login({ email, password });
     setUser(res.user);
+    return res.user;
   };
 
-  const signup = async (email: string, password: string, displayName: string) => {
+  const signup = async (email: string, password: string, displayName: string, accountType: 'patient' | 'laboratory' | 'clinician' = 'patient', clinician: ClinicianSignup = {}) => {
     const res = await authApi.signup({
       email,
       password,
       display_name: displayName,
+      account_type: accountType,
+      ...clinician,
     });
     setUser(res.user);
   };

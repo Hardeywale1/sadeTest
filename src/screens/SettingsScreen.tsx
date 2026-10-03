@@ -13,6 +13,7 @@ import { authApi } from '../api/authApi';
 import { toast } from '../components/Toast';
 import { Profile, Session } from '../types';
 import { COLORS } from '../theme/colors';
+import { getDeviceCoordinates } from '../services/deviceLocation';
 
 export const SettingsScreen: React.FC<{ onEditOnboarding?: () => void; onManageGoals?: () => void }> = ({ onEditOnboarding, onManageGoals }) => {
   const { user, logout, refreshUser } = useAuth();
@@ -22,6 +23,7 @@ export const SettingsScreen: React.FC<{ onEditOnboarding?: () => void; onManageG
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [passwordMsg, setPasswordMsg] = useState('');
+  const [locating, setLocating] = useState(false);
 
   useEffect(() => {
     loadSettingsData();
@@ -75,6 +77,20 @@ export const SettingsScreen: React.FC<{ onEditOnboarding?: () => void; onManageG
     }
   };
 
+  const updateLocation = async () => {
+    setLocating(true);
+    try {
+      const location = await getDeviceCoordinates();
+      const updated = await profileApi.updateProfile({ location: { ...location, updated_at: new Date().toISOString() } });
+      setProfile(updated);
+      toast('Location updated', undefined, 'success');
+    } catch (error: any) {
+      toast('Location unavailable', error?.message || 'Check location permission and try again.', 'error');
+    } finally {
+      setLocating(false);
+    }
+  };
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.title}>Your profile</Text>
@@ -96,6 +112,10 @@ export const SettingsScreen: React.FC<{ onEditOnboarding?: () => void; onManageG
         <TouchableOpacity style={styles.saveBtn} onPress={handleUpdateProfile}>
           <Text style={styles.saveBtnText}>Save Profile</Text>
         </TouchableOpacity>
+        <TouchableOpacity style={styles.locationBtn} onPress={updateLocation} disabled={locating}>
+          <Text style={styles.locationBtnText}>{locating ? 'Getting location…' : profile?.location ? 'Update current location' : 'Use current location'}</Text>
+        </TouchableOpacity>
+        {profile?.location ? <Text style={styles.locationStatus}>Location available for nearby care matching.</Text> : null}
       </View>
 
       <Text style={styles.sectionHeader}>Personalization</Text>
@@ -244,6 +264,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
   },
+  locationBtn: { borderRadius: 99, borderWidth: 1, borderColor: COLORS.primary, paddingVertical: 11, alignItems: 'center', marginTop: 10 },
+  locationBtnText: { color: COLORS.primary, fontSize: 13, fontWeight: '700' },
+  locationStatus: { color: COLORS.onSurfaceVariant, fontSize: 11, marginTop: 8, textAlign: 'center' },
   sessionCard: {
     backgroundColor: COLORS.cardBg,
     borderRadius: 14,

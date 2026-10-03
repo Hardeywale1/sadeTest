@@ -23,10 +23,24 @@ import { OnboardingScreen } from './src/screens/OnboardingScreen';
 import { CareScreen } from './src/screens/CareScreen';
 import { GoalsScreen } from './src/screens/GoalsScreen';
 import { LandingScreen } from './src/screens/LandingScreen';
+import { ProviderWorkspace } from './src/screens/ProviderWorkspace';
+import { ExternalLabHandoffScreen } from './src/screens/ExternalLabHandoffScreen';
+import { ExternalPharmacyHandoffScreen } from './src/screens/ExternalPharmacyHandoffScreen';
+import { LabRegistrationScreen } from './src/screens/LabRegistrationScreen';
 import { onboardingApi } from './src/api/profileApi';
 import { COLORS } from './src/theme/colors';
 
 type TabType = 'dashboard' | 'cycle' | 'journal' | 'community' | 'care' | 'settings';
+type PublicScreen = 'landing' | 'patient-auth' | 'clinician-auth' | 'lab-auth';
+
+const initialPublicScreen = (): PublicScreen => {
+  if (Platform.OS !== 'web' || typeof window === 'undefined') return 'landing';
+  const portal = new URLSearchParams(window.location.search).get('portal');
+  if (portal === 'clinician') return 'clinician-auth';
+  if (portal === 'lab') return 'lab-auth';
+  if (portal === 'patient') return 'patient-auth';
+  return 'landing';
+};
 
 const TAB_SUBTITLE: Record<TabType, string> = {
   dashboard: 'Home',
@@ -62,8 +76,8 @@ const useWebViewportFix = () => {
 };
 
 const AppContent: React.FC = () => {
-  const { isAuthenticated, isLoading } = useAuth();
-  const [publicScreen, setPublicScreen] = useState<'landing' | 'auth'>('landing');
+  const { isAuthenticated, isLoading, user, greetingName, logout } = useAuth();
+  const [publicScreen, setPublicScreen] = useState<PublicScreen>(initialPublicScreen);
   const [currentTab, setCurrentTab] = useState<TabType>('dashboard');
   const [onboardingState, setOnboardingState] = useState<'checking' | 'required' | 'complete'>('checking');
   const [careJourneyOpen, setCareJourneyOpen] = useState(false);
@@ -71,8 +85,17 @@ const AppContent: React.FC = () => {
   const openCare=(mode:'home'|'concern',id?:string)=>{setCareEntry({mode,id});setCurrentTab('care');};
   const [goalsOpen, setGoalsOpen] = useState(false);
   const [trackerView, setTrackerView] = useState<'today' | 'cycle'>('today');
+  const [labProfileOpen, setLabProfileOpen] = useState(false);
 
   useWebViewportFix();
+
+  const openPublicScreen = (screen: PublicScreen) => {
+    setPublicScreen(screen);
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const portal = screen === 'clinician-auth' ? 'clinician' : screen === 'lab-auth' ? 'lab' : screen === 'patient-auth' ? 'patient' : '';
+      window.history.replaceState({}, '', portal ? `?portal=${portal}` : window.location.pathname);
+    }
+  };
 
   const navigateFromDashboard = (tab: 'cycle' | 'journal', nextTrackerView?: 'today' | 'cycle') => {
     if (nextTrackerView) setTrackerView(nextTrackerView);
@@ -97,6 +120,13 @@ const AppContent: React.FC = () => {
       .catch(() => setOnboardingState('required'));
   }, [isAuthenticated]);
 
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    const pharmacyToken = new URLSearchParams(window.location.search).get('pharmacy_handoff');
+    if (pharmacyToken) return <ExternalPharmacyHandoffScreen token={pharmacyToken} />;
+    const handoffToken = new URLSearchParams(window.location.search).get('handoff');
+    if (handoffToken) return <ExternalLabHandoffScreen token={handoffToken} />;
+  }
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -107,10 +137,19 @@ const AppContent: React.FC = () => {
   }
 
   if (!isAuthenticated) {
-    if (publicScreen === 'auth') {
-      return <AuthScreen onBack={() => setPublicScreen('landing')} />;
+    if (publicScreen !== 'landing') {
+      const portalRole = publicScreen === 'clinician-auth' ? 'clinician' : publicScreen === 'lab-auth' ? 'lab' : undefined;
+      return <AuthScreen portalRole={portalRole} onBack={() => openPublicScreen('landing')} />;
     }
-    return <LandingScreen onStart={() => setPublicScreen('auth')} onSignIn={() => setPublicScreen('auth')} />;
+    return <LandingScreen onStart={() => openPublicScreen('patient-auth')} onSignIn={() => openPublicScreen('patient-auth')} onClinician={() => openPublicScreen('clinician-auth')} onLab={() => openPublicScreen('lab-auth')} />;
+  }
+
+  if (user?.role === 'lab_applicant' || (user?.role === 'lab' && labProfileOpen)) {
+    return <LabRegistrationScreen onLogout={logout} onBack={user.role === 'lab' ? () => setLabProfileOpen(false) : undefined} />;
+  }
+
+  if (user && (user.role === 'clinician' || user.role === 'lab' || user.role === 'admin')) {
+    return <ProviderWorkspace role={user.role} displayName={greetingName} onLogout={logout} onManageProfile={user.role === 'lab' ? () => setLabProfileOpen(true) : undefined} />;
   }
 
   if (onboardingState === 'checking') {

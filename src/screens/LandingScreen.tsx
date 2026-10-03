@@ -1,5 +1,6 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
+  Animated,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -14,6 +15,8 @@ import { COLORS } from '../theme/colors';
 type Props = {
   onStart: () => void;
   onSignIn: () => void;
+  onClinician: () => void;
+  onLab: () => void;
 };
 
 const CARE_PATHS = [
@@ -23,6 +26,30 @@ const CARE_PATHS = [
   ['head-heart-outline', 'Vaginal health', 'Discharge, irritation, infections and recurring symptoms.'],
   ['flower-outline', 'PCOS & endometriosis', 'Ongoing symptom tracking and specialist-led support.'],
   ['human-pregnant', 'Fertility care', 'Preconception questions, testing and guided next steps.'],
+] as const;
+
+const HEADLINES = [
+  {
+    eyebrow: 'Cycle and period tracking',
+    title: 'Know your rhythm.',
+    body: 'Track periods, symptoms and daily wellbeing. See patterns that make every health conversation clearer.',
+  },
+  {
+    eyebrow: 'Continuous women’s care',
+    title: 'Care that keeps moving.',
+    body: 'From concern to test, result, clinician and follow-up—Sadé keeps every next step connected.',
+  },
+  {
+    eyebrow: 'Community that cares',
+    title: 'You’re not figuring it out alone.',
+    body: 'Share, learn and feel understood in a community built around real experiences and better health.',
+  },
+] as const;
+
+const PILLARS = [
+  ['calendar-heart', 'Track', 'Periods, symptoms and everyday wellbeing become one useful health timeline.'],
+  ['medical-bag', 'Care', 'Raise a concern and move through the right tests, providers and follow-up.'],
+  ['account-group-outline', 'Community', 'Find shared experience, practical support and conversations that care.'],
 ] as const;
 
 const JOURNEY = [
@@ -38,10 +65,23 @@ const ROUTE = [
   ['doctor', 'Clinician follow-up', 'Pending'],
 ] as const;
 
-export const LandingScreen: React.FC<Props> = ({ onStart, onSignIn }) => {
+export const LandingScreen: React.FC<Props> = ({ onStart, onSignIn, onClinician, onLab }) => {
   const { width } = useWindowDimensions();
   const desktop = width >= 900;
   const scrollView = useRef<any>(null);
+  const [headlineIndex, setHeadlineIndex] = useState(0);
+  const heroOpacity = useRef(new Animated.Value(1)).current;
+  const headline = HEADLINES[headlineIndex];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      Animated.timing(heroOpacity, { toValue: 0, duration: 220, useNativeDriver: false }).start(() => {
+        setHeadlineIndex((current) => (current + 1) % HEADLINES.length);
+        Animated.timing(heroOpacity, { toValue: 1, duration: 320, useNativeDriver: false }).start();
+      });
+    }, 4800);
+    return () => clearInterval(timer);
+  }, [heroOpacity]);
 
   const scrollToCare = () => {
     scrollView.current?.scrollTo({ y: desktop ? 710 : 1020, animated: true });
@@ -60,39 +100,93 @@ export const LandingScreen: React.FC<Props> = ({ onStart, onSignIn }) => {
               <Text style={styles.brand}>Sadé</Text>
             </View>
             <View style={styles.navActions}>
-              {desktop ? <TouchableOpacity onPress={scrollToCare}><Text style={styles.navLink}>Care</Text></TouchableOpacity> : null}
+              {desktop ? <TouchableOpacity onPress={scrollToCare}><Text style={styles.navLink}>Explore</Text></TouchableOpacity> : null}
+              {desktop ? <TouchableOpacity onPress={onClinician}><Text style={styles.navLink}>Clinician portal</Text></TouchableOpacity> : null}
+              {desktop ? <TouchableOpacity onPress={onLab}><Text style={styles.navLink}>Lab portal</Text></TouchableOpacity> : null}
               <TouchableOpacity style={styles.signInButton} onPress={onSignIn}>
-                <Text style={styles.signInText}>Sign in</Text>
+                <Text style={styles.signInText}>Patient sign in</Text>
               </TouchableOpacity>
             </View>
           </View>
 
           <View style={[styles.hero, desktop && styles.heroDesktop]}>
             <View style={[styles.heroCopy, desktop && styles.heroCopyDesktop]}>
-              <View style={styles.eyebrowPill}>
-                <View style={styles.liveDot} />
-                <Text style={styles.eyebrow}>Continuous women’s care</Text>
+              <Animated.View style={{ opacity: heroOpacity }}>
+                <View style={styles.eyebrowPill}>
+                  <View style={styles.liveDot} />
+                  <Text style={styles.eyebrow}>{headline.eyebrow}</Text>
+                </View>
+                <Text style={[styles.heroTitle, desktop && styles.heroTitleDesktop]}>{headline.title}</Text>
+                <Text style={[styles.heroBody, desktop && styles.heroBodyDesktop]}>{headline.body}</Text>
+              </Animated.View>
+              <View style={styles.heroDots}>
+                {HEADLINES.map((item, index) => (
+                  <TouchableOpacity
+                    key={item.eyebrow}
+                    accessibilityLabel={`Show ${item.eyebrow}`}
+                    onPress={() => setHeadlineIndex(index)}
+                    style={[styles.heroDot, index === headlineIndex && styles.heroDotActive]}
+                  />
+                ))}
               </View>
-              <Text style={[styles.heroTitle, desktop && styles.heroTitleDesktop]}>Care that keeps moving.</Text>
-              <Text style={[styles.heroBody, desktop && styles.heroBodyDesktop]}>
-                From concern to test, result, clinician and follow-up—Sadé keeps every next step connected.
-              </Text>
               <View style={[styles.heroActions, desktop && styles.heroActionsDesktop]}>
                 <TouchableOpacity style={styles.primaryButton} onPress={onStart}>
-                  <Text style={styles.primaryButtonText}>Start your care</Text>
+                  <Text style={styles.primaryButtonText}>Join Sadé</Text>
                   <MaterialCommunityIcons name="arrow-right" size={20} color="#FFFFFF" />
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.secondaryButton} onPress={scrollToCare}>
-                  <Text style={styles.secondaryButtonText}>Explore care</Text>
+                  <Text style={styles.secondaryButtonText}>Explore Sadé</Text>
                 </TouchableOpacity>
               </View>
               <View style={styles.trustRow}>
                 <MaterialCommunityIcons name="shield-check-outline" size={19} color={COLORS.emerald} />
-                <Text style={styles.trustText}>Private health timeline · Clear next steps · Coordinated providers</Text>
+                <Text style={styles.trustText}>Private tracking · Coordinated care · A community that understands</Text>
               </View>
             </View>
 
             <View style={[styles.routeWrap, desktop && styles.routeWrapDesktop]}>
+              <Animated.View style={{ opacity: heroOpacity }}>
+              {headlineIndex === 0 ? (
+                <View style={styles.routeCard}>
+                  <View style={styles.routeHeader}>
+                    <View>
+                      <Text style={styles.routeEyebrow}>Your cycle</Text>
+                      <Text style={styles.routeTitle}>Day 18</Text>
+                    </View>
+                    <View style={styles.secureIcon}>
+                      <MaterialCommunityIcons name="calendar-heart" size={19} color={COLORS.primary} />
+                    </View>
+                  </View>
+                  <View style={styles.cycleOverview}>
+                    <View style={styles.cycleNumber}>
+                      <Text style={styles.cycleDay}>18</Text>
+                      <Text style={styles.cycleDayLabel}>cycle day</Text>
+                    </View>
+                    <View style={styles.cycleSummary}>
+                      <Text style={styles.cyclePhase}>Luteal phase</Text>
+                      <Text style={styles.cycleEstimate}>Period expected in 10 days</Text>
+                      <View style={styles.progressTrack}><View style={styles.progressFill} /></View>
+                    </View>
+                  </View>
+                  <Text style={styles.cardSectionLabel}>Today</Text>
+                  <View style={styles.todayGrid}>
+                    {[['water-outline', 'Flow', 'None'], ['flash-outline', 'Energy', 'Steady'], ['emoticon-happy-outline', 'Mood', 'Good']].map(([icon, label, value]) => (
+                      <View key={label} style={styles.todayItem}>
+                        <MaterialCommunityIcons name={icon as any} size={19} color={COLORS.primary} />
+                        <Text style={styles.todayLabel}>{label}</Text>
+                        <Text style={styles.todayValue}>{value}</Text>
+                      </View>
+                    ))}
+                  </View>
+                  <View style={styles.nextStep}>
+                    <View style={styles.nextStepIcon}><MaterialCommunityIcons name="chart-timeline-variant" size={22} color={COLORS.primary} /></View>
+                    <View style={styles.nextStepCopy}>
+                      <Text style={styles.nextStepLabel}>Pattern</Text>
+                      <Text style={styles.nextStepTitle}>Pain often rises before your period</Text>
+                    </View>
+                  </View>
+                </View>
+              ) : headlineIndex === 1 ? (
               <View style={styles.routeCard}>
                 <View style={styles.routeHeader}>
                   <View>
@@ -134,7 +228,41 @@ export const LandingScreen: React.FC<Props> = ({ onStart, onSignIn }) => {
                   <MaterialCommunityIcons name="chevron-right" size={22} color={COLORS.primary} />
                 </View>
               </View>
-              <View style={styles.floatingResult}>
+              ) : (
+                <View style={styles.routeCard}>
+                  <View style={styles.routeHeader}>
+                    <View>
+                      <Text style={styles.routeEyebrow}>Sadé Community</Text>
+                      <Text style={styles.routeTitle}>A space that gets it</Text>
+                    </View>
+                    <View style={styles.secureIcon}>
+                      <MaterialCommunityIcons name="account-group-outline" size={20} color={COLORS.primary} />
+                    </View>
+                  </View>
+                  <View style={styles.communityTopics}>
+                    {[
+                      ['weather-night', 'Living with period pain', 'Support circle'],
+                      ['calendar-question', 'Understanding cycle changes', 'Ask & learn'],
+                      ['heart-outline', 'Small wins this week', 'Community check-in'],
+                    ].map(([icon, title, label]) => (
+                      <View key={title} style={styles.communityTopic}>
+                        <View style={styles.communityIcon}><MaterialCommunityIcons name={icon as any} size={20} color={COLORS.primary} /></View>
+                        <View style={styles.communityCopy}>
+                          <Text style={styles.communityTitle}>{title}</Text>
+                          <Text style={styles.communityLabel}>{label}</Text>
+                        </View>
+                        <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.outline} />
+                      </View>
+                    ))}
+                  </View>
+                  <View style={styles.communityPrivacy}>
+                    <MaterialCommunityIcons name="shield-account-outline" size={20} color={COLORS.emerald} />
+                    <Text style={styles.communityPrivacyText}>Choose your name, privacy and how you participate.</Text>
+                  </View>
+                </View>
+              )}
+              </Animated.View>
+              {headlineIndex === 1 ? <View style={styles.floatingResult}>
                 <View style={styles.resultIcon}>
                   <MaterialCommunityIcons name="file-check-outline" size={19} color={COLORS.emerald} />
                 </View>
@@ -142,12 +270,33 @@ export const LandingScreen: React.FC<Props> = ({ onStart, onSignIn }) => {
                   <Text style={styles.resultTitle}>Results received</Text>
                   <Text style={styles.resultText}>Clinician notified</Text>
                 </View>
-              </View>
+              </View> : null}
             </View>
           </View>
         </View>
 
         <View style={styles.section}>
+          <Text style={styles.sectionEyebrow}>One Sadé</Text>
+          <View style={[styles.sectionHeadingRow, desktop && styles.sectionHeadingRowDesktop]}>
+            <Text style={[styles.sectionTitle, desktop && styles.sectionTitleDesktop]}>Your health has more than one side.</Text>
+            <Text style={[styles.sectionIntro, desktop && styles.sectionIntroDesktop]}>
+              Track what is happening, find care when you need it and stay close to people who understand.
+            </Text>
+          </View>
+          <View style={styles.pillarGrid}>
+            {PILLARS.map(([icon, title, body], index) => (
+              <View key={title} style={[styles.pillarCard, desktop && styles.pillarCardDesktop, index === 1 && styles.pillarCardPrimary]}>
+                <View style={[styles.pillarIcon, index === 1 && styles.pillarIconPrimary]}>
+                  <MaterialCommunityIcons name={icon} size={25} color={index === 1 ? '#FFFFFF' : COLORS.primary} />
+                </View>
+                <Text style={[styles.pillarTitle, index === 1 && styles.pillarTextPrimary]}>{title}</Text>
+                <Text style={[styles.pillarBody, index === 1 && styles.pillarBodyPrimary]}>{body}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        <View style={[styles.section, styles.careSection]}>
           <Text style={styles.sectionEyebrow}>Dedicated care</Text>
           <View style={[styles.sectionHeadingRow, desktop && styles.sectionHeadingRowDesktop]}>
             <Text style={[styles.sectionTitle, desktop && styles.sectionTitleDesktop]}>Start with what you’re experiencing.</Text>
@@ -262,7 +411,10 @@ const styles = StyleSheet.create({
   heroTitleDesktop: { fontSize: 72, lineHeight: 74, letterSpacing: -2.5 },
   heroBody: { marginTop: 20, color: COLORS.onSurfaceVariant, fontSize: 17, lineHeight: 27, maxWidth: 570 },
   heroBodyDesktop: { fontSize: 19, lineHeight: 30 },
-  heroActions: { width: '100%', marginTop: 30, gap: 12 },
+  heroDots: { marginTop: 22, flexDirection: 'row', gap: 7 },
+  heroDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#D6BEC4' },
+  heroDotActive: { width: 24, backgroundColor: COLORS.primaryContainer },
+  heroActions: { width: '100%', marginTop: 24, gap: 12 },
   heroActionsDesktop: { width: 'auto', flexDirection: 'row' },
   primaryButton: { minHeight: 54, paddingHorizontal: 23, borderRadius: 28, backgroundColor: COLORS.primaryContainer, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 },
   primaryButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
@@ -297,7 +449,30 @@ const styles = StyleSheet.create({
   resultIcon: { width: 34, height: 34, borderRadius: 17, backgroundColor: COLORS.emeraldLight, alignItems: 'center', justifyContent: 'center' },
   resultTitle: { color: COLORS.onSurface, fontSize: 12, fontWeight: '700' },
   resultText: { color: COLORS.onSurfaceVariant, fontSize: 10, marginTop: 2 },
+  cycleOverview: { paddingVertical: 24, flexDirection: 'row', alignItems: 'center', gap: 18 },
+  cycleNumber: { width: 92, height: 92, borderRadius: 46, borderWidth: 8, borderColor: '#ECD7DC', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFF8F8' },
+  cycleDay: { color: COLORS.primary, fontFamily: 'serif', fontSize: 30, lineHeight: 32 },
+  cycleDayLabel: { color: COLORS.onSurfaceVariant, fontSize: 9, textTransform: 'uppercase', letterSpacing: 0.7 },
+  cycleSummary: { flex: 1 },
+  cyclePhase: { color: COLORS.onSurface, fontSize: 15, fontWeight: '700' },
+  cycleEstimate: { marginTop: 5, color: COLORS.onSurfaceVariant, fontSize: 12, lineHeight: 18 },
+  progressTrack: { marginTop: 13, height: 6, borderRadius: 3, backgroundColor: '#EFDFE2', overflow: 'hidden' },
+  progressFill: { width: '64%', height: 6, borderRadius: 3, backgroundColor: COLORS.primaryContainer },
+  cardSectionLabel: { color: COLORS.onSurfaceVariant, fontSize: 10, fontWeight: '800', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 },
+  todayGrid: { flexDirection: 'row', gap: 8, marginBottom: 18 },
+  todayItem: { flex: 1, minHeight: 82, borderRadius: 13, padding: 10, backgroundColor: COLORS.surfaceContainerLow },
+  todayLabel: { marginTop: 8, color: COLORS.onSurfaceVariant, fontSize: 9, textTransform: 'uppercase', letterSpacing: 0.6 },
+  todayValue: { marginTop: 2, color: COLORS.onSurface, fontSize: 12, fontWeight: '700' },
+  communityTopics: { paddingVertical: 12, gap: 2 },
+  communityTopic: { minHeight: 72, flexDirection: 'row', alignItems: 'center', gap: 12, borderBottomWidth: 1, borderBottomColor: '#F0E4E6' },
+  communityIcon: { width: 40, height: 40, borderRadius: 13, backgroundColor: COLORS.surfaceContainerLow, alignItems: 'center', justifyContent: 'center' },
+  communityCopy: { flex: 1 },
+  communityTitle: { color: COLORS.onSurface, fontSize: 13, fontWeight: '700' },
+  communityLabel: { marginTop: 4, color: COLORS.onSurfaceVariant, fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.6 },
+  communityPrivacy: { marginTop: 10, borderRadius: 14, padding: 14, backgroundColor: COLORS.emeraldLight, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  communityPrivacyText: { flex: 1, color: COLORS.onSurfaceVariant, fontSize: 11, lineHeight: 17 },
   section: { width: '100%', maxWidth: 1180, paddingHorizontal: 24, paddingVertical: 92 },
+  careSection: { paddingTop: 10 },
   sectionEyebrow: { color: COLORS.primary, fontSize: 11, fontWeight: '800', letterSpacing: 1.4, textTransform: 'uppercase' },
   sectionHeadingRow: { marginTop: 12, gap: 16 },
   sectionHeadingRowDesktop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
@@ -305,6 +480,16 @@ const styles = StyleSheet.create({
   sectionTitleDesktop: { fontSize: 50, lineHeight: 56 },
   sectionIntro: { color: COLORS.onSurfaceVariant, fontSize: 15, lineHeight: 24, maxWidth: 430 },
   sectionIntroDesktop: { textAlign: 'right' },
+  pillarGrid: { marginTop: 42, flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
+  pillarCard: { width: '100%', minHeight: 230, borderRadius: 22, padding: 24, backgroundColor: '#F3E6E9' },
+  pillarCardDesktop: { width: '31.9%', flexGrow: 1 },
+  pillarCardPrimary: { backgroundColor: COLORS.primary },
+  pillarIcon: { width: 50, height: 50, borderRadius: 16, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
+  pillarIconPrimary: { backgroundColor: '#FFFFFF1C' },
+  pillarTitle: { marginTop: 34, color: COLORS.onSurface, fontFamily: 'serif', fontSize: 27 },
+  pillarTextPrimary: { color: '#FFFFFF' },
+  pillarBody: { marginTop: 9, color: COLORS.onSurfaceVariant, fontSize: 13, lineHeight: 21 },
+  pillarBodyPrimary: { color: '#F1DDE2' },
   careGrid: { marginTop: 42, flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
   careCard: { width: '100%', minHeight: 190, borderRadius: 20, padding: 22, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#EDDFE2' },
   careCardDesktop: { width: '31.9%', flexGrow: 1 },

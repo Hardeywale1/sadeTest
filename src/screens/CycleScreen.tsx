@@ -33,6 +33,8 @@ export const CycleScreen: React.FC = () => {
   const [bbt, setBbt] = useState('98.4');
   const [opkResult, setOpkResult] = useState<'Positive (+)' | 'Negative (-)'>('Positive (+)');
   const [periodDate, setPeriodDate] = useState(localISODate());
+  const [periodEnded, setPeriodEnded] = useState(false);
+  const [periodEndDate, setPeriodEndDate] = useState(localISODate());
   const [ovulationDate, setOvulationDate] = useState(localISODate());
   const [flow, setFlow] = useState<'spotting' | 'light' | 'medium' | 'heavy'>('medium');
   const [savingPeriod, setSavingPeriod] = useState(false);
@@ -83,8 +85,12 @@ export const CycleScreen: React.FC = () => {
     }
     setSavingPeriod(true);
     try {
-      await cycleApi.logPeriod({ start_date: periodDate, flow_days: [{ date: periodDate, intensity: flow }] });
-      toast('Period logged', 'Your cycle day and phase have been recalculated.', 'success');
+      if (periodEnded && periodEndDate < periodDate) {
+        toast('Check dates', 'The last day cannot be before the first day.', 'error');
+        return;
+      }
+      await cycleApi.logPeriod({ start_date: periodDate, end_date: periodEnded ? periodEndDate : undefined, flow_days: [{ date: periodDate, intensity: flow }] });
+      toast('Period logged', periodEnded ? 'Your period summary is ready.' : 'Your cycle day and phase have been recalculated.', 'success');
       await loadCycleData();
     } catch (error: any) {
       toast('Could not save', error?.response?.data?.error || 'Please try logging your period again.', 'error');
@@ -120,6 +126,8 @@ export const CycleScreen: React.FC = () => {
       <Text style={styles.sectionTitle}>Log your period</Text>
       <View style={styles.card}>
         <CalendarField label="First day of bleeding" value={periodDate} onChange={setPeriodDate} maximumDate={localISODate()} />
+        <TouchableOpacity style={[styles.endedToggle, periodEnded && styles.endedToggleActive]} onPress={() => setPeriodEnded(!periodEnded)}><Text style={[styles.flowText, periodEnded && styles.flowTextActive]}>{periodEnded ? 'Period completed' : 'Mark period as completed'}</Text></TouchableOpacity>
+        {periodEnded ? <CalendarField label="Last day of bleeding" value={periodEndDate} onChange={setPeriodEndDate} minimumDate={periodDate} maximumDate={localISODate()} /> : null}
         <Text style={[styles.cardLabel, { marginTop: 16 }]}>Today’s flow</Text>
         <View style={styles.flowRow}>{(['spotting', 'light', 'medium', 'heavy'] as const).map((item) => <TouchableOpacity key={item} style={[styles.flowChip, flow === item && styles.flowChipActive]} onPress={() => setFlow(item)}><Text style={[styles.flowText, flow === item && styles.flowTextActive]}>{item}</Text></TouchableOpacity>)}</View>
         <TouchableOpacity style={styles.saveBtn} onPress={handleLogPeriod} disabled={savingPeriod}>{savingPeriod ? <Text style={styles.saveBtnText}>Saving...</Text> : <Text style={styles.saveBtnText}>Save Period</Text>}</TouchableOpacity>
@@ -168,6 +176,7 @@ export const CycleScreen: React.FC = () => {
           <View key={p.id} style={styles.historyCard}>
             <Text style={styles.historyDate}>Start Date: {p.start_date}</Text>
             <Text style={styles.historyFlow}>Flow Days Logged: {p.flow_days?.length || 0} days</Text>
+            {p.summary?<View style={[styles.summaryBadge,p.summary.classification==='irregular'&&styles.summaryBadgeAlert]}><Text style={styles.summaryTitle}>{p.summary.classification==='insufficient_history'?'More history needed':p.summary.classification==='normal'?'Within usual range':'Pattern to review'}</Text><Text style={styles.historyFlow}>{p.summary.reasons.join(' ')}</Text><Text style={styles.historyFlow}>{p.summary.guidance}</Text></View>:null}
           </View>
         ))
       )}
@@ -245,6 +254,8 @@ const styles = StyleSheet.create({
   flowChipActive: { backgroundColor: COLORS.primaryContainer, borderColor: COLORS.primaryContainer },
   flowText: { color: COLORS.onSurfaceVariant, fontSize: 11, fontWeight: '700', textTransform: 'capitalize' },
   flowTextActive: { color: '#FFFFFF' },
+  endedToggle: { alignSelf: 'flex-start', marginVertical: 12, borderWidth: 1, borderColor: COLORS.roseBorder, backgroundColor: COLORS.surfaceContainerLow, paddingHorizontal: 12, paddingVertical: 9, borderRadius: 18 },
+  endedToggleActive: { backgroundColor: COLORS.primaryContainer, borderColor: COLORS.primaryContainer },
   opkBtn: {
     flex: 1,
     paddingVertical: 12,
@@ -304,6 +315,9 @@ const styles = StyleSheet.create({
     color: COLORS.onSurfaceVariant,
     marginTop: 2,
   },
+  summaryBadge: { marginTop: 10, padding: 11, borderRadius: 10, backgroundColor: COLORS.emeraldLight },
+  summaryBadgeAlert: { backgroundColor: '#FFF0EC' },
+  summaryTitle: { color: COLORS.onSurface, fontSize: 12, fontWeight: '800', marginBottom: 3 },
   emptyCard: {
     backgroundColor: COLORS.surfaceContainerLow,
     borderRadius: 14,
