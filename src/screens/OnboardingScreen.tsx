@@ -196,7 +196,7 @@ export const OnboardingScreen: React.FC<Props> = ({ onComplete, mode = 'onboardi
     switch (section) {
       case 'demographics':
         return <>
-          <CalendarField label="Date of birth" value={value.date_of_birth || ''} onChange={(date) => setSection('date_of_birth', date)} maximumDate={todayLocal()} />
+          <CalendarField label="Date of birth" value={value.date_of_birth || ''} onChange={(date) => setSection('date_of_birth', date)} maximumDate={todayLocal()} yearSelection />
           <Text style={styles.label}>How do you describe yourself?</Text>
           {['Woman', 'Non-binary', 'Prefer to self-describe', 'Prefer not to say'].map((item) => <Choice key={item} label={item} selected={value.gender_identity === item.toLowerCase()} onPress={() => setSection('gender_identity', item.toLowerCase())} />)}
         </>;

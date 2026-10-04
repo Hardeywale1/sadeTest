@@ -217,7 +217,7 @@ function ClinicianCase({ canPractice, current, busy, clinicalIntelligence, clini
       {(current.care_summary?.recommendations || [current.assessment?.guidance]).filter(Boolean).map((item: string) => <Text key={item} style={styles.panelBody}>• {item}</Text>)}
       <Text style={styles.panelTitle}>Next plan</Text>
       {(current.care_summary?.next_plan || []).map((item: string) => <Text key={item} style={styles.panelBody}>• {item}</Text>)}
-      <Text style={styles.muted}>Draft for clinician review · {current.care_summary?.source === 'sade_ai' ? `Sadé AI · ${current.care_summary.model || 'Gemma'} · ${new Date(current.care_summary.generated_at).toLocaleString()}` : 'Triage rules · generate with Sadé AI below'}</Text>
+      <Text style={styles.muted}>Draft for clinician review</Text>
       {current.brief?.ai_available ? <Action label="Generate with Sadé AI" busy={busy} secondary onPress={() => update({ action: 'generate_summary' })} /> : null}
     </View>
     <View style={styles.panel}>

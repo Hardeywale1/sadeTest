@@ -115,11 +115,11 @@ export const AuthScreen: React.FC<{ onBack?: () => void; portalRole?: PortalRole
 
           {!isLoginTab && portalRole === 'clinician' ? <>
             <View style={styles.inputGroup}><Text style={styles.label}>Professional title</Text><TextInput style={styles.input} placeholder="Doctor, gynaecologist, nurse" value={professionalTitle} onChangeText={setProfessionalTitle} /></View>
-            <View style={styles.inputGroup}><Text style={styles.label}>Medical licence number (optional)</Text><TextInput style={styles.input} value={medicalLicenseNumber} onChangeText={setMedicalLicenseNumber} /></View>
-            <View style={styles.inputGroup}><Text style={styles.label}>NIN (optional)</Text><TextInput style={styles.input} value={nin} onChangeText={setNin} secureTextEntry /></View>
-            <View style={styles.inputGroup}><Text style={styles.label}>BVN (optional)</Text><TextInput style={styles.input} value={bvn} onChangeText={setBvn} secureTextEntry /></View>
-            <View style={styles.inputGroup}><Text style={styles.label}>Licence document URL (optional)</Text><TextInput style={styles.input} autoCapitalize="none" value={licenseDocumentURL} onChangeText={setLicenseDocumentURL} /></View>
-            <View style={styles.inputGroup}><Text style={styles.label}>Identity document URL (optional)</Text><TextInput style={styles.input} autoCapitalize="none" value={identityDocumentURL} onChangeText={setIdentityDocumentURL} /></View>
+            <View style={styles.inputGroup}><Text style={styles.label}>Medical licence number</Text><TextInput style={styles.input} value={medicalLicenseNumber} onChangeText={setMedicalLicenseNumber} /></View>
+            <View style={styles.inputGroup}><Text style={styles.label}>NIN</Text><TextInput style={styles.input} value={nin} onChangeText={setNin} secureTextEntry /></View>
+            <View style={styles.inputGroup}><Text style={styles.label}>BVN</Text><TextInput style={styles.input} value={bvn} onChangeText={setBvn} secureTextEntry /></View>
+            <View style={styles.inputGroup}><Text style={styles.label}>Licence document URL</Text><TextInput style={styles.input} autoCapitalize="none" value={licenseDocumentURL} onChangeText={setLicenseDocumentURL} /></View>
+            <View style={styles.inputGroup}><Text style={styles.label}>Identity document URL</Text><TextInput style={styles.input} autoCapitalize="none" value={identityDocumentURL} onChangeText={setIdentityDocumentURL} /></View>
           </> : null}
 
           <View style={styles.inputGroup}>

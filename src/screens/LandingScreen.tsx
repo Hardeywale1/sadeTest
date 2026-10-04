@@ -104,7 +104,7 @@ export const LandingScreen: React.FC<Props> = ({ onStart, onSignIn, onClinician,
               {desktop ? <TouchableOpacity onPress={onClinician}><Text style={styles.navLink}>Clinician portal</Text></TouchableOpacity> : null}
               {desktop ? <TouchableOpacity onPress={onLab}><Text style={styles.navLink}>Lab portal</Text></TouchableOpacity> : null}
               <TouchableOpacity style={styles.signInButton} onPress={onSignIn}>
-                <Text style={styles.signInText}>Patient sign in</Text>
+                <Text style={styles.signInText}>Sign in</Text>
               </TouchableOpacity>
             </View>
           </View>

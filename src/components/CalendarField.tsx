@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS } from '../theme/colors';
 
@@ -25,14 +25,17 @@ export const CalendarField = ({
   onChange,
   minimumDate,
   maximumDate,
+  yearSelection = false,
 }: {
   label: string;
   value?: string;
   onChange: (date: string) => void;
   minimumDate?: string;
   maximumDate?: string;
+  yearSelection?: boolean;
 }) => {
   const [visible, setVisible] = useState(false);
+  const [selectingYear, setSelectingYear] = useState(false);
   const [month, setMonth] = useState(() => {
     const selected = parseISO(value);
     return new Date(selected.getFullYear(), selected.getMonth(), 1);
@@ -47,12 +50,16 @@ export const CalendarField = ({
   const open = () => {
     const selected = parseISO(value);
     setMonth(new Date(selected.getFullYear(), selected.getMonth(), 1));
+    setSelectingYear(yearSelection && !value);
     setVisible(true);
   };
 
   const moveMonth = (offset: number) => setMonth((current) => new Date(current.getFullYear(), current.getMonth() + offset, 1));
   const max = maximumDate ? parseISO(maximumDate) : undefined;
   const min = minimumDate ? parseISO(minimumDate) : undefined;
+  const maximumYear = max?.getFullYear() ?? new Date().getFullYear() + 100;
+  const minimumYear = min?.getFullYear() ?? maximumYear - 120;
+  const years = Array.from({ length: maximumYear - minimumYear + 1 }, (_, index) => maximumYear - index);
 
   return (
     <View style={styles.field}>
@@ -67,11 +74,17 @@ export const CalendarField = ({
         <View style={styles.overlay}>
           <View style={styles.calendar}>
             <View style={styles.monthRow}>
-              <TouchableOpacity style={styles.iconButton} onPress={() => moveMonth(-1)}><MaterialCommunityIcons name="chevron-left" size={24} color={COLORS.primary} /></TouchableOpacity>
-              <Text style={styles.monthTitle}>{MONTHS[month.getMonth()]} {month.getFullYear()}</Text>
-              <TouchableOpacity style={styles.iconButton} onPress={() => moveMonth(1)}><MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.primary} /></TouchableOpacity>
+              {!selectingYear ? <TouchableOpacity style={styles.iconButton} onPress={() => moveMonth(-1)}><MaterialCommunityIcons name="chevron-left" size={24} color={COLORS.primary} /></TouchableOpacity> : <View style={styles.iconButton} />}
+              <TouchableOpacity disabled={!yearSelection} onPress={() => setSelectingYear((current) => !current)} accessibilityRole={yearSelection ? 'button' : undefined}>
+                <Text style={styles.monthTitle}>{selectingYear ? 'Select year' : `${MONTHS[month.getMonth()]} ${month.getFullYear()}`}</Text>
+              </TouchableOpacity>
+              {!selectingYear ? <TouchableOpacity style={styles.iconButton} onPress={() => moveMonth(1)}><MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.primary} /></TouchableOpacity> : <View style={styles.iconButton} />}
             </View>
-            <View style={styles.grid}>
+            {selectingYear ? <ScrollView style={styles.yearScroll} contentContainerStyle={styles.yearGrid}>
+              {years.map((year) => <TouchableOpacity key={year} style={[styles.yearCell, year === month.getFullYear() && styles.selectedYear]} onPress={() => { setMonth((current) => new Date(year, current.getMonth(), 1)); setSelectingYear(false); }}>
+                <Text style={[styles.yearText, year === month.getFullYear() && styles.selectedYearText]}>{year}</Text>
+              </TouchableOpacity>)}
+            </ScrollView> : <View style={styles.grid}>
               {WEEKDAYS.map((day, index) => <Text key={`${day}-${index}`} style={styles.weekday}>{day}</Text>)}
               {cells.map((day, index) => {
                 if (!day) return <View key={`blank-${index}`} style={styles.dayCell} />;
@@ -83,7 +96,7 @@ export const CalendarField = ({
                   <Text style={[styles.dayText, selected && styles.selectedDayText, disabled && styles.disabledDay]}>{day}</Text>
                 </TouchableOpacity>;
               })}
-            </View>
+            </View>}
             <TouchableOpacity style={styles.closeButton} onPress={() => setVisible(false)}><Text style={styles.closeText}>Close</Text></TouchableOpacity>
           </View>
         </View>
@@ -104,6 +117,12 @@ const styles = StyleSheet.create({
   monthTitle: { fontFamily: 'serif', color: COLORS.primary, fontSize: 19, fontWeight: '700' },
   iconButton: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center' },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
+  yearScroll: { maxHeight: 310 },
+  yearGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingVertical: 4 },
+  yearCell: { width: '33.3333%', paddingVertical: 13, alignItems: 'center', borderRadius: 12 },
+  yearText: { color: COLORS.onSurface, fontSize: 14, fontWeight: '700' },
+  selectedYear: { backgroundColor: COLORS.primaryContainer },
+  selectedYearText: { color: '#FFFFFF' },
   weekday: { width: '14.2857%', textAlign: 'center', color: COLORS.outline, fontSize: 11, fontWeight: '800', paddingVertical: 7 },
   dayCell: { width: '14.2857%', aspectRatio: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 99 },
   dayText: { color: COLORS.onSurface, fontSize: 13, fontWeight: '600' },
