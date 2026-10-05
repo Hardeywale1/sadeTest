@@ -14,7 +14,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS } from '../theme/colors';
 import { LabOrder } from '../api/careApi';
 import { ClinicalIntelligence, ClinicalTestSuggestion, ProviderAction, ProviderCase, providerApi } from '../api/providerApi';
-import { LabProfile, labPartnerApi } from '../api/labPartnerApi';
+import { LabProfile, SupportedClinicalTest, labPartnerApi } from '../api/labPartnerApi';
 
 type ProviderRole = 'clinician' | 'lab' | 'admin';
 
@@ -41,6 +41,8 @@ export const ProviderWorkspace: React.FC<{ role: ProviderRole; displayName: stri
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [testName, setTestName] = useState('');
+  const [testID, setTestID] = useState('');
+  const [supportedTests, setSupportedTests] = useState<SupportedClinicalTest[]>([]);
   const [resultNotes, setResultNotes] = useState<Record<string, string>>({});
   const [resultURLs, setResultURLs] = useState<Record<string, string>>({});
   const [appointmentAt, setAppointmentAt] = useState('');
@@ -84,6 +86,9 @@ export const ProviderWorkspace: React.FC<{ role: ProviderRole; displayName: stri
   useEffect(() => {
     if (role === 'admin') labPartnerApi.applications().then(setLabApplications).catch(() => setError('Could not load laboratory applications.'));
   }, [role]);
+  useEffect(() => {
+    if (role === 'clinician') labPartnerApi.supportedTests().then(setSupportedTests).catch(() => setError('Could not load the clinical test catalogue.'));
+  }, [role]);
 
   const reviewLab = async (profile: LabProfile, decision: 'approve' | 'reject', reason = '') => {
     setBusy(true); setError('');
@@ -102,7 +107,7 @@ export const ProviderWorkspace: React.FC<{ role: ProviderRole; displayName: stri
       const updated = await providerApi.updateCase(current.id, { ...action, revision: current.revision });
       setCurrent(updated);
       setCases((items) => items.map((item) => item.id === updated.id ? updated : item));
-      if (action.action === 'order_test') setTestName('');
+      if (action.action === 'order_test') { setTestName(''); setTestID(''); }
     } catch (e: any) {
       setError(e.response?.data?.error || 'Could not update this case.');
       if (e.response?.status === 409) void load();
@@ -185,7 +190,7 @@ export const ProviderWorkspace: React.FC<{ role: ProviderRole; displayName: stri
                   </React.Fragment>)}
                 </View>
 
-                {role !== 'lab' ? <ClinicianCase canPractice={role === 'clinician'} current={current} busy={busy} clinicalIntelligence={clinicalIntelligence} clinicalLoading={clinicalLoading} testName={testName} setTestName={setTestName} appointmentAt={appointmentAt} setAppointmentAt={setAppointmentAt} medicine={medicine} setMedicine={setMedicine} dose={dose} setDose={setDose} frequency={frequency} setFrequency={setFrequency} durationDays={durationDays} setDurationDays={setDurationDays} instructions={instructions} setInstructions={setInstructions} reminderTimes={reminderTimes} setReminderTimes={setReminderTimes} update={update} /> : <LabCase current={current} busy={busy} resultNotes={resultNotes} setResultNotes={setResultNotes} resultURLs={resultURLs} setResultURLs={setResultURLs} update={update} />}
+                {role !== 'lab' ? <ClinicianCase canPractice={role === 'clinician'} current={current} busy={busy} clinicalIntelligence={clinicalIntelligence} clinicalLoading={clinicalLoading} supportedTests={supportedTests} testID={testID} setTestID={setTestID} testName={testName} setTestName={setTestName} appointmentAt={appointmentAt} setAppointmentAt={setAppointmentAt} medicine={medicine} setMedicine={setMedicine} dose={dose} setDose={setDose} frequency={frequency} setFrequency={setFrequency} durationDays={durationDays} setDurationDays={setDurationDays} instructions={instructions} setInstructions={setInstructions} reminderTimes={reminderTimes} setReminderTimes={setReminderTimes} update={update} /> : <LabCase current={current} busy={busy} resultNotes={resultNotes} setResultNotes={setResultNotes} resultURLs={resultURLs} setResultURLs={setResultURLs} update={update} />}
               </>
             )}
           </ScrollView>
@@ -195,10 +200,11 @@ export const ProviderWorkspace: React.FC<{ role: ProviderRole; displayName: stri
   );
 };
 
-function ClinicianCase({ canPractice, current, busy, clinicalIntelligence, clinicalLoading, testName, setTestName, appointmentAt, setAppointmentAt, medicine, setMedicine, dose, setDose, frequency, setFrequency, durationDays, setDurationDays, instructions, setInstructions, reminderTimes, setReminderTimes, update }: any) {
+function ClinicianCase({ canPractice, current, busy, clinicalIntelligence, clinicalLoading, supportedTests, testID, setTestID, testName, setTestName, appointmentAt, setAppointmentAt, medicine, setMedicine, dose, setDose, frequency, setFrequency, durationDays, setDurationDays, instructions, setInstructions, reminderTimes, setReminderTimes, update }: any) {
   const [knowledgeFeedback, setKnowledgeFeedback] = useState('');
   const [feedbackStatus, setFeedbackStatus] = useState('');
   const [feedbackBusy, setFeedbackBusy] = useState(false);
+  const [testCatalogueOpen, setTestCatalogueOpen] = useState(false);
   const schedule = () => {
     const when = new Date(appointmentAt);
     if (!appointmentAt || Number.isNaN(when.getTime())) return;
@@ -222,13 +228,15 @@ function ClinicianCase({ canPractice, current, busy, clinicalIntelligence, clini
     </View>
     <View style={styles.panel}>
       <Text style={styles.panelLabel}>Patient-reported summary</Text>
-      <View style={styles.factGrid}>{(current.facts || []).map((fact: any) => <View key={fact.id} style={styles.fact}><Text style={styles.factLabel}>{fact.label}</Text><Text style={styles.factValue}>{fact.value}</Text></View>)}</View>
+      <View style={styles.factGrid}>{(current.facts || []).filter((fact: any) => fact.id !== 'triage.guidance').map((fact: any) => <View key={fact.id} style={styles.fact}><Text style={styles.factLabel}>{fact.label}</Text><Text style={styles.factValue}>{fact.value}</Text></View>)}</View>
     </View>
     {canPractice ? <ClinicalIntelligencePanel key={current.id} value={clinicalIntelligence} loading={clinicalLoading} busy={busy} decisions={current.clinician_decisions || []} onDecision={update} /> : null}
     {canPractice ? <View style={styles.panel}>
       <Text style={styles.panelLabel}>Laboratory orders</Text>
       {(current.workflow?.lab_orders || []).map((order: LabOrder) => <OrderCard key={order.id} order={order}>{order.status === 'result_ready' ? <Action label="Mark result reviewed" busy={busy} onPress={() => update({ action: 'review_result', order_id: order.id })} /> : null}</OrderCard>)}
-      <View style={styles.inlineForm}><TextInput value={testName} onChangeText={setTestName} placeholder="Test name" placeholderTextColor={COLORS.outline} style={styles.input} /><Action label="Create order" busy={busy} disabled={!testName.trim()} onPress={() => update({ action: 'order_test', test_name: testName })} /></View>
+      <TouchableOpacity style={styles.catalogueTrigger} onPress={() => setTestCatalogueOpen((open) => !open)}><View style={styles.orderCopy}><Text style={styles.panelTitle}>{testName || 'Select a clinical test'}</Text>{testID ? <Text style={styles.muted}>{testID.replaceAll('_', ' ')}</Text> : null}</View><MaterialCommunityIcons name={testCatalogueOpen ? 'chevron-up' : 'chevron-down'} size={20} color={COLORS.primary} /></TouchableOpacity>
+      {testCatalogueOpen ? <ScrollView style={styles.testCatalogue} nestedScrollEnabled>{supportedTests.map((test: SupportedClinicalTest) => <TouchableOpacity key={test.id} style={[styles.testOption, testID === test.id && styles.testOptionSelected]} onPress={() => { setTestID(test.id); setTestName(test.name); setTestCatalogueOpen(false); }}><Text style={styles.panelTitle}>{test.name}{test.abbreviation ? ` (${test.abbreviation})` : ''}</Text><Text style={styles.muted}>{test.type}{test.specimen ? ` · ${test.specimen.replaceAll('_', ' ')}` : ''}</Text></TouchableOpacity>)}</ScrollView> : null}
+      <Action label="Create order" busy={busy} disabled={!testID || !testName.trim()} onPress={() => update({ action: 'order_test', test_id: testID, test_name: testName })} />
     </View> : null}
     {canPractice ? <View style={styles.panel}>
       <Text style={styles.panelLabel}>Appointment</Text>
@@ -345,6 +353,7 @@ const styles = StyleSheet.create({
   twoCol: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 }, panel: { flexShrink: 0, minWidth: 250, borderRadius: 15, padding: 17, gap: 12, backgroundColor: '#FCF9F9', borderWidth: 1, borderColor: '#EEE4E6' }, halfPanel: { flexGrow: 1, flexBasis: 250 }, panelLabel: { color: COLORS.primary, fontSize: 9, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1 }, panelTitle: { color: COLORS.onSurface, fontSize: 13, fontWeight: '700', textTransform: 'capitalize' }, panelBody: { color: COLORS.onSurfaceVariant, fontSize: 11, lineHeight: 17 },
   factGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 }, fact: { width: '48%', minWidth: 190, borderRadius: 10, padding: 11, backgroundColor: '#FFFFFF' }, factLabel: { color: COLORS.outline, fontSize: 9, textTransform: 'uppercase', letterSpacing: 0.6 }, factValue: { marginTop: 4, color: COLORS.onSurface, fontSize: 11, lineHeight: 17 },
   inlineForm: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }, input: { minHeight: 44, flex: 1, minWidth: 210, borderRadius: 10, borderWidth: 1, borderColor: '#DFD1D4', backgroundColor: '#FFFFFF', paddingHorizontal: 12, color: COLORS.onSurface, fontSize: 12 }, textarea: { minHeight: 88, paddingTop: 12, textAlignVertical: 'top' }, action: { minHeight: 42, borderRadius: 10, paddingHorizontal: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.primaryContainer }, actionSecondary: { backgroundColor: COLORS.surfaceContainerHigh }, actionDisabled: { opacity: 0.5 }, actionText: { color: '#FFFFFF', fontSize: 11, fontWeight: '800' }, actionTextSecondary: { color: COLORS.primary },
+  catalogueTrigger: { minHeight: 48, borderRadius: 10, borderWidth: 1, borderColor: '#DFD1D4', backgroundColor: '#FFFFFF', paddingHorizontal: 12, paddingVertical: 9, flexDirection: 'row', alignItems: 'center', gap: 10 }, testCatalogue: { maxHeight: 320, borderRadius: 12, borderWidth: 1, borderColor: '#E9DEE0', backgroundColor: '#FFFFFF', overflow: 'hidden' }, testOption: { paddingHorizontal: 13, paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: '#F1E8EA' }, testOptionSelected: { backgroundColor: COLORS.surfaceContainerLow },
   orderCard: { borderRadius: 12, padding: 13, gap: 11, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E9DEE0' }, orderTop: { flexDirection: 'row', alignItems: 'center', gap: 10 }, orderIcon: { width: 38, height: 38, borderRadius: 12, backgroundColor: COLORS.surfaceContainerLow, alignItems: 'center', justifyContent: 'center' }, orderCopy: { flex: 1 }, resultBox: { borderRadius: 10, padding: 12, backgroundColor: COLORS.emeraldLight }, resultLink: { marginTop: 6, color: COLORS.primary, fontSize: 10 }, resultForm: { gap: 8 }, appointment: { flexDirection: 'row', alignItems: 'center', gap: 11 },
   intelligenceHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }, reviewBadge: { borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: '#FFF0D6' }, reviewBadgeText: { color: '#7A4A00', fontSize: 9, fontWeight: '800', textTransform: 'capitalize' }, clinicalAlert: { borderRadius: 10, padding: 11, backgroundColor: '#FFEDEA', flexDirection: 'row', gap: 8, alignItems: 'center' }, suggestionCard: { borderRadius: 12, padding: 13, gap: 12, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E9DEE0', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' },
   decisionActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 }, decisionRow: { borderRadius: 11, padding: 12, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E9DEE0' },

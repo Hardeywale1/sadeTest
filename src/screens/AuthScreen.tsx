@@ -15,6 +15,7 @@ import { COLORS } from '../theme/colors';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 type PortalRole = 'clinician' | 'lab';
+const CLINICIAN_PROFESSIONS = ['Medical doctor', 'Gynaecologist', 'Obstetrician-gynaecologist', 'Nurse', 'Midwife', 'Other clinician'];
 
 export const AuthScreen: React.FC<{ onBack?: () => void; portalRole?: PortalRole }> = ({ onBack, portalRole }) => {
   const { login, signup, logout } = useAuth();
@@ -23,6 +24,7 @@ export const AuthScreen: React.FC<{ onBack?: () => void; portalRole?: PortalRole
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [professionalTitle, setProfessionalTitle] = useState('');
+  const [professionOpen, setProfessionOpen] = useState(false);
   const [medicalLicenseNumber, setMedicalLicenseNumber] = useState('');
   const [nin, setNin] = useState('');
   const [bvn, setBvn] = useState('');
@@ -114,7 +116,7 @@ export const AuthScreen: React.FC<{ onBack?: () => void; portalRole?: PortalRole
           )}
 
           {!isLoginTab && portalRole === 'clinician' ? <>
-            <View style={styles.inputGroup}><Text style={styles.label}>Professional title</Text><TextInput style={styles.input} placeholder="Doctor, gynaecologist, nurse" value={professionalTitle} onChangeText={setProfessionalTitle} /></View>
+            <View style={styles.inputGroup}><Text style={styles.label}>Profession</Text><TouchableOpacity style={styles.select} onPress={() => setProfessionOpen((open) => !open)}><Text style={[styles.selectText, !professionalTitle && styles.selectPlaceholder]}>{professionalTitle || 'Select profession'}</Text><MaterialCommunityIcons name={professionOpen ? 'chevron-up' : 'chevron-down'} size={20} color={COLORS.primary} /></TouchableOpacity>{professionOpen ? <View style={styles.selectMenu}>{CLINICIAN_PROFESSIONS.map((profession) => <TouchableOpacity key={profession} style={[styles.selectOption, professionalTitle === profession && styles.selectOptionSelected]} onPress={() => { setProfessionalTitle(profession); setProfessionOpen(false); }}><Text style={styles.selectOptionText}>{profession}</Text></TouchableOpacity>)}</View> : null}</View>
             <View style={styles.inputGroup}><Text style={styles.label}>Medical licence number</Text><TextInput style={styles.input} value={medicalLicenseNumber} onChangeText={setMedicalLicenseNumber} /></View>
             <View style={styles.inputGroup}><Text style={styles.label}>NIN</Text><TextInput style={styles.input} value={nin} onChangeText={setNin} secureTextEntry /></View>
             <View style={styles.inputGroup}><Text style={styles.label}>BVN</Text><TextInput style={styles.input} value={bvn} onChangeText={setBvn} secureTextEntry /></View>
@@ -271,6 +273,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.onSurface,
   },
+  select: {
+    minHeight: 48,
+    backgroundColor: COLORS.surfaceContainerLow,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  selectText: { color: COLORS.onSurface, fontSize: 14, fontWeight: '600' },
+  selectPlaceholder: { color: '#A08C8C', fontWeight: '400' },
+  selectMenu: { marginTop: 6, borderRadius: 14, overflow: 'hidden', borderWidth: 1, borderColor: COLORS.surfaceContainerHighest },
+  selectOption: { paddingHorizontal: 16, paddingVertical: 12, backgroundColor: COLORS.cardBg, borderBottomWidth: 1, borderBottomColor: COLORS.surfaceContainerHigh },
+  selectOptionSelected: { backgroundColor: COLORS.surfaceContainerLow },
+  selectOptionText: { color: COLORS.onSurface, fontSize: 13, fontWeight: '600' },
   submitBtn: {
     backgroundColor: COLORS.primaryContainer,
     borderRadius: 99,

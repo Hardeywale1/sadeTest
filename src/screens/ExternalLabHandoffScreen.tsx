@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, Platform, ScrollView, Text, TextInput, View } from 'react-native';
-import QRCode from 'qrcode';
+import { ActivityIndicator, Platform, ScrollView, Text, TextInput, View } from 'react-native';
 import { CalendarField } from '../components/CalendarField';
 import { Button, ui } from '../components/CareUI';
 import { handoffApi, PublicLabHandoff } from '../api/handoffApi';
@@ -15,15 +14,11 @@ export const ExternalLabHandoffScreen: React.FC<{ token: string }> = ({ token })
   const [estimatedAt, setEstimatedAt] = useState(today());
   const [result, setResult] = useState('');
   const [documentURL, setDocumentURL] = useState('');
-  const [qr, setQR] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     handoffApi.get(token).then(setHandoff).catch((e) => setError(e.response?.data?.error || 'This laboratory request is unavailable.'));
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      QRCode.toDataURL(window.location.href, { width: 220, margin: 1, color: { dark: '#681227', light: '#FFFFFF' } }).then(setQR).catch(() => undefined);
-    }
   }, [token]);
 
   const checkIn = async () => {
@@ -49,7 +44,7 @@ export const ExternalLabHandoffScreen: React.FC<{ token: string }> = ({ token })
     <Text style={ui.eyebrow}>Sadé care handoff</Text><Text style={ui.title}>Laboratory request</Text>
     {error ? <View style={ui.card}><Text style={ui.error}>{error}</Text></View> : null}
     {handoff ? <>
-      <View style={ui.card}><Text style={ui.eyebrow}>Request {handoff.reference}</Text><Text style={ui.heading}>{handoff.test_name}</Text><Text style={ui.text}>Patient: {handoff.patient_name}</Text><Text style={ui.text}>Requested by: {handoff.ordered_by_name || 'Sadé clinician'}</Text>{qr ? <Image source={{ uri: qr }} style={{ width: 180, height: 180, alignSelf: 'center', marginTop: 12 }} /> : null}<Button label="Print or save as PDF" secondary onPress={print} /></View>
+      <View style={ui.card}><Text style={ui.eyebrow}>Request {handoff.reference}</Text><Text style={ui.heading}>{handoff.test_name}</Text><Text style={ui.text}>Patient: {handoff.patient_name}</Text><Text style={ui.text}>Requested by: {handoff.ordered_by_name || 'Sadé clinician'}</Text><Button label="Print or save as PDF" secondary onPress={print} /></View>
       {handoff.status === 'issued' ? <View style={ui.card}><Text style={ui.heading}>Laboratory check-in</Text><TextInput style={ui.input} placeholder="Laboratory name" value={providerName} onChangeText={setProviderName} maxLength={160} /><TextInput style={ui.input} placeholder="Phone number" value={phone} onChangeText={setPhone} keyboardType="phone-pad" maxLength={24} /><CalendarField label="Estimated result date" value={estimatedAt} onChange={setEstimatedAt} minimumDate={today()} /><Button label="Confirm check-in" busy={busy} onPress={checkIn} /></View> : null}
       {handoff.status === 'checked_in' ? <View style={ui.card}><Text style={ui.heading}>Upload result</Text><Text style={ui.small}>{handoff.provider_name} · expected {handoff.estimated_result_at}</Text><TextInput style={[ui.input, { minHeight: 110, textAlignVertical: 'top' }]} multiline placeholder="Result summary" value={result} onChangeText={setResult} maxLength={2000} /><TextInput style={ui.input} placeholder="Secure document URL (optional)" value={documentURL} onChangeText={setDocumentURL} autoCapitalize="none" /><Button label="Send result to clinician" busy={busy} onPress={upload} /></View> : null}
       {handoff.status === 'result_ready' ? <View style={[ui.card, { backgroundColor: COLORS.emeraldLight }]}><Text style={ui.heading}>Result sent</Text><Text style={ui.text}>The Sadé clinician can now review this result.</Text></View> : null}
