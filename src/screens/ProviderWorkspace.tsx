@@ -13,8 +13,10 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS } from '../theme/colors';
 import { LabOrder } from '../api/careApi';
-import { ClinicalIntelligence, ClinicalTestSuggestion, ProviderAction, ProviderCase, providerApi } from '../api/providerApi';
+import { ClinicalIntelligence, ClinicalTestSuggestion, ClinicianWallet, ProviderAction, ProviderCase, providerApi } from '../api/providerApi';
 import { LabProfile, SupportedClinicalTest, labPartnerApi } from '../api/labPartnerApi';
+import { profileApi } from '../api/profileApi';
+import { ClinicianSettings } from '../types';
 
 type ProviderRole = 'clinician' | 'lab' | 'admin';
 
@@ -55,6 +57,8 @@ export const ProviderWorkspace: React.FC<{ role: ProviderRole; displayName: stri
   const [labApplications, setLabApplications] = useState<LabProfile[]>([]);
   const [clinicalIntelligence, setClinicalIntelligence] = useState<ClinicalIntelligence | null>(null);
   const [clinicalLoading, setClinicalLoading] = useState(false);
+  const [view, setView] = useState<'queue'|'settings'|'wallet'>('queue');
+  const [wallet, setWallet] = useState<ClinicianWallet | null>(null);
 
   const title = role === 'lab' ? 'Laboratory workspace' : role === 'admin' ? 'Care operations' : 'Clinician workspace';
   const queueTitle = role === 'lab' ? 'Test orders' : 'Care queue';
@@ -86,6 +90,7 @@ export const ProviderWorkspace: React.FC<{ role: ProviderRole; displayName: stri
   useEffect(() => {
     if (role === 'admin') labPartnerApi.applications().then(setLabApplications).catch(() => setError('Could not load laboratory applications.'));
   }, [role]);
+  useEffect(() => { if (role === 'clinician' && view === 'wallet') providerApi.wallet().then(setWallet).catch(() => setError('Could not load wallet.')); }, [role, view]);
   useEffect(() => {
     if (role === 'clinician') labPartnerApi.supportedTests().then(setSupportedTests).catch(() => setError('Could not load the clinical test catalogue.'));
   }, [role]);
@@ -131,8 +136,8 @@ export const ProviderWorkspace: React.FC<{ role: ProviderRole; displayName: stri
       <View style={[styles.sidebar, !desktop && styles.sidebarMobile]}>
         <View style={styles.logoRow}><View style={styles.logo}><Text style={styles.logoText}>S</Text></View><Text style={styles.brand}>Sadé</Text></View>
         {desktop ? <View style={styles.navList}>
-          <View style={styles.navActive}><MaterialCommunityIcons name={role === 'lab' ? 'flask-outline' : 'view-dashboard-outline'} size={20} color="#FFFFFF" /><Text style={styles.navActiveText}>{queueTitle}</Text></View>
-          <View style={styles.navItem}><MaterialCommunityIcons name="bell-outline" size={20} color={COLORS.onSurfaceVariant} /><Text style={styles.navText}>Updates</Text></View>
+          <TouchableOpacity onPress={()=>setView('queue')} style={view==='queue'?styles.navActive:styles.navItem}><MaterialCommunityIcons name={role === 'lab' ? 'flask-outline' : 'view-dashboard-outline'} size={20} color={view==='queue'?'#FFFFFF':COLORS.onSurfaceVariant} /><Text style={view==='queue'?styles.navActiveText:styles.navText}>{queueTitle}</Text></TouchableOpacity>
+          {role==='clinician'?<><TouchableOpacity onPress={()=>setView('settings')} style={view==='settings'?styles.navActive:styles.navItem}><MaterialCommunityIcons name="calendar-clock-outline" size={20} color={view==='settings'?'#FFFFFF':COLORS.onSurfaceVariant}/><Text style={view==='settings'?styles.navActiveText:styles.navText}>Availability</Text></TouchableOpacity><TouchableOpacity onPress={()=>setView('wallet')} style={view==='wallet'?styles.navActive:styles.navItem}><MaterialCommunityIcons name="wallet-outline" size={20} color={view==='wallet'?'#FFFFFF':COLORS.onSurfaceVariant}/><Text style={view==='wallet'?styles.navActiveText:styles.navText}>Wallet</Text></TouchableOpacity></>:null}
         </View> : null}
         <TouchableOpacity style={styles.account} onPress={onLogout}>
           <View style={styles.avatar}><Text style={styles.avatarText}>{displayName.charAt(0).toUpperCase()}</Text></View>
@@ -143,11 +148,11 @@ export const ProviderWorkspace: React.FC<{ role: ProviderRole; displayName: stri
 
       <View style={styles.workspace}>
         <View style={styles.topbar}>
-          <View><Text style={styles.eyebrow}>Sadé provider network</Text><Text style={styles.pageTitle}>{title}</Text></View>
-          <View style={styles.topActions}>{onManageProfile ? <TouchableOpacity style={styles.refresh} onPress={onManageProfile}><MaterialCommunityIcons name="office-building-cog-outline" size={19} color={COLORS.primary} /><Text style={styles.refreshText}>Laboratory profile</Text></TouchableOpacity> : null}<TouchableOpacity style={styles.refresh} onPress={load}><MaterialCommunityIcons name="refresh" size={19} color={COLORS.primary} /><Text style={styles.refreshText}>Refresh</Text></TouchableOpacity></View>
+          <View><Text style={styles.eyebrow}>Sadé provider network</Text><Text style={styles.pageTitle}>{view==='settings'?'Availability settings':view==='wallet'?'Wallet':title}</Text></View>
+          <View style={styles.topActions}>{role==='clinician'?<><TouchableOpacity style={styles.refresh} onPress={()=>setView('settings')}><MaterialCommunityIcons name="calendar-clock-outline" size={19} color={COLORS.primary}/><Text style={styles.refreshText}>Availability</Text></TouchableOpacity><TouchableOpacity style={styles.refresh} onPress={()=>setView('wallet')}><MaterialCommunityIcons name="wallet-outline" size={19} color={COLORS.primary}/><Text style={styles.refreshText}>Wallet</Text></TouchableOpacity></>:null}{onManageProfile ? <TouchableOpacity style={styles.refresh} onPress={onManageProfile}><MaterialCommunityIcons name="office-building-cog-outline" size={19} color={COLORS.primary} /><Text style={styles.refreshText}>Laboratory profile</Text></TouchableOpacity> : null}<TouchableOpacity style={styles.refresh} onPress={()=>{setView('queue');void load()}}><MaterialCommunityIcons name="refresh" size={19} color={COLORS.primary} /><Text style={styles.refreshText}>Cases</Text></TouchableOpacity></View>
         </View>
 
-        {role !== 'lab' ? <View style={styles.metrics}>
+        {view==='queue' && role !== 'lab' ? <View style={styles.metrics}>
           <Metric label="Active cases" value={metrics.active} icon="folder-heart-outline" />
           <Metric label="Waiting on team" value={metrics.waiting} icon="clock-outline" />
           <Metric label="Urgent" value={metrics.priority} icon="alert-circle-outline" alert={metrics.priority > 0} />
@@ -155,9 +160,9 @@ export const ProviderWorkspace: React.FC<{ role: ProviderRole; displayName: stri
 
         {error ? <View style={styles.errorBox}><MaterialCommunityIcons name="alert-circle-outline" size={18} color={COLORS.error} /><Text style={styles.errorText}>{error}</Text></View> : null}
 
-        {role === 'admin' ? <AdminLabApplications applications={labApplications} busy={busy} onReview={reviewLab} /> : null}
+        {view==='queue' && role === 'admin' ? <AdminLabApplications applications={labApplications} busy={busy} onReview={reviewLab} /> : null}
 
-        <View style={[styles.content, !desktop && styles.contentMobile]}>
+        {view==='settings' && role==='clinician'?<ClinicianAvailabilitySettings onSaved={()=>setView('queue')}/>:view==='wallet' && role==='clinician'?<WalletView wallet={wallet}/>:<View style={[styles.content, !desktop && styles.contentMobile]}>
           <View style={[styles.queue, !desktop && styles.queueMobile]}>
             <View style={styles.queueHeader}><Text style={styles.sectionTitle}>{queueTitle}</Text><View style={styles.countPill}><Text style={styles.countText}>{cases.length}</Text></View></View>
             {loading ? <ActivityIndicator style={{ marginTop: 40 }} color={COLORS.primary} /> : null}
@@ -194,11 +199,36 @@ export const ProviderWorkspace: React.FC<{ role: ProviderRole; displayName: stri
               </>
             )}
           </ScrollView>
-        </View>
+        </View>}
       </View>
     </View>
   );
 };
+
+const availabilityDays=['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+const defaultClinicianSettings:ClinicianSettings={accepting_patients:true,slot_duration_minutes:30,consultation_fee_minor:1000000,currency:'NGN',availability:availabilityDays.map((day)=>({day,start:'09:00',end:'17:00',enabled:!['saturday','sunday'].includes(day)})),unavailable_dates:[]};
+
+function ClinicianAvailabilitySettings({onSaved}:{onSaved:()=>void}) {
+  const[settings,setSettings]=useState<ClinicianSettings>(defaultClinicianSettings);const[busy,setBusy]=useState(true);const[error,setError]=useState('');
+  useEffect(()=>{profileApi.getProfile().then((profile)=>setSettings(profile.clinician_settings||defaultClinicianSettings)).catch(()=>setError('Could not load settings.')).finally(()=>setBusy(false))},[]);
+  const patchWindow=(day:string,patch:Partial<ClinicianSettings['availability'][number]>)=>setSettings((value)=>({...value,availability:value.availability.map((item)=>item.day===day?{...item,...patch}:item)}));
+  const save=async()=>{setBusy(true);setError('');try{await profileApi.updateProfile({clinician_settings:settings});onSaved()}catch(e:any){setError(e.response?.data?.error||'Could not save availability.')}finally{setBusy(false)}};
+  if(busy)return <ActivityIndicator color={COLORS.primary}/>;
+  return <ScrollView style={styles.settingsPage} contentContainerStyle={styles.settingsContent}>
+    {error?<Text style={styles.errorText}>{error}</Text>:null}
+    <View style={styles.panel}><Text style={styles.panelLabel}>New patients</Text><TouchableOpacity style={[styles.availabilityToggle,settings.accepting_patients&&styles.availabilityToggleOn]} onPress={()=>setSettings((value)=>({...value,accepting_patients:!value.accepting_patients}))}><Text style={settings.accepting_patients?styles.dayTextSelected:styles.navText}>{settings.accepting_patients?'Accepting patients':'Paused'}</Text></TouchableOpacity></View>
+    <View style={styles.panel}><Text style={styles.panelLabel}>Consultation</Text><Text style={styles.panelTitle}>Fee</Text><TextInput style={styles.input} keyboardType="number-pad" value={String(settings.consultation_fee_minor/100)} onChangeText={(value:string)=>setSettings((current)=>({...current,consultation_fee_minor:Math.round((Number(value)||0)*100)}))}/><Text style={styles.muted}>NGN · Sadé records a 10% platform fee</Text><Text style={styles.panelTitle}>Appointment length</Text><View style={styles.decisionActions}>{[30,45,60].map((minutes)=><Action key={minutes} label={`${minutes} min`} secondary={settings.slot_duration_minutes!==minutes} onPress={()=>setSettings((value)=>({...value,slot_duration_minutes:minutes}))}/>)}</View></View>
+    <View style={styles.panel}><Text style={styles.panelLabel}>Weekly calendar</Text>{settings.availability.map((window)=><View key={window.day} style={styles.availabilityRow}><TouchableOpacity style={[styles.dayWide,window.enabled&&styles.daySelected]} onPress={()=>patchWindow(window.day,{enabled:!window.enabled})}><Text style={window.enabled?styles.dayTextSelected:styles.navText}>{window.day.slice(0,3)}</Text></TouchableOpacity><TextInput editable={window.enabled} style={[styles.input,styles.availabilityTime,!window.enabled&&styles.disabledInput]} value={window.start} onChangeText={(start:string)=>patchWindow(window.day,{start})}/><Text style={styles.muted}>to</Text><TextInput editable={window.enabled} style={[styles.input,styles.availabilityTime,!window.enabled&&styles.disabledInput]} value={window.end} onChangeText={(end:string)=>patchWindow(window.day,{end})}/></View>)}<Text style={styles.muted}>Times use your profile timezone.</Text></View>
+    <View style={styles.panel}><Text style={styles.panelLabel}>Unavailable dates</Text><TextInput style={styles.input} value={(settings.unavailable_dates||[]).join(', ')} placeholder="2026-10-12, 2026-10-13" onChangeText={(value:string)=>setSettings((current)=>({...current,unavailable_dates:value.split(',').map((item:string)=>item.trim()).filter(Boolean)}))}/></View>
+    <Action label="Save settings" busy={busy} disabled={settings.consultation_fee_minor<=0||!settings.availability.some((item)=>item.enabled)} onPress={save}/>
+  </ScrollView>;
+}
+
+function WalletView({wallet}:{wallet:ClinicianWallet|null}) {
+  const money=(minor:number,currency='NGN')=>new Intl.NumberFormat('en-NG',{style:'currency',currency,maximumFractionDigits:0}).format(minor/100);
+  if(!wallet)return <ActivityIndicator color={COLORS.primary}/>;
+  return <ScrollView style={styles.settingsPage} contentContainerStyle={styles.settingsContent}><View style={styles.metrics}><Metric label="Available" value={money(wallet.available_minor,wallet.currency)} icon="cash-check"/><Metric label="Pending" value={money(wallet.pending_minor,wallet.currency)} icon="clock-outline"/></View><View style={styles.panel}><Text style={styles.panelLabel}>Transactions</Text>{wallet.entries.length===0?<Text style={styles.muted}>No consultations yet.</Text>:wallet.entries.map((entry)=><View key={entry.case_id} style={styles.walletRow}><View><Text style={styles.panelTitle}>{entry.patient_name}</Text><Text style={styles.muted}>{new Date(entry.created_at).toLocaleDateString()} · {entry.status}</Text></View><Text style={styles.walletAmount}>{money(entry.amount_minor,entry.currency)}</Text></View>)}</View></ScrollView>;
+}
 
 function ClinicianCase({ canPractice, current, busy, clinicalIntelligence, clinicalLoading, supportedTests, testID, setTestID, testName, setTestName, appointmentAt, setAppointmentAt, medicine, setMedicine, dose, setDose, frequency, setFrequency, durationDays, setDurationDays, instructions, setInstructions, reminderTimes, setReminderTimes, update }: any) {
   const [knowledgeFeedback, setKnowledgeFeedback] = useState('');
@@ -213,7 +243,7 @@ function ClinicianCase({ canPractice, current, busy, clinicalIntelligence, clini
   return <>
     <View style={styles.twoCol}>
       <View style={[styles.panel, styles.halfPanel]}><Text style={styles.panelLabel}>Concern</Text><Text style={styles.panelTitle}>{concernLabel(current.intake?.concern)}</Text><Text style={styles.panelBody}>{current.assessment?.title}</Text></View>
-      <View style={[styles.panel, styles.halfPanel]}><Text style={styles.panelLabel}>Payment</Text><Text style={styles.panelTitle}>{current.workflow?.payment_status?.replaceAll('_', ' ') || 'Not started'}</Text>{current.workflow?.payment_status === 'pending' ? <Action label="Confirm sample payment" busy={busy} onPress={() => update({ action: 'confirm_sample_payment' })} /> : null}</View>
+      <View style={[styles.panel, styles.halfPanel]}><Text style={styles.panelLabel}>Payment</Text><Text style={styles.panelTitle}>{current.workflow?.payment_status?.replaceAll('_', ' ') || 'Not started'}</Text>{current.workflow?.consultation_payment?<Text style={styles.panelBody}>{new Intl.NumberFormat('en-NG',{style:'currency',currency:current.workflow.consultation_payment.currency,maximumFractionDigits:0}).format(current.workflow.consultation_payment.amount_minor/100)}</Text>:null}</View>
     </View>
     <View style={styles.panel}>
       <Text style={styles.panelLabel}>Care summary</Text>
@@ -332,7 +362,7 @@ function OrderCard({ order, children }: { order: LabOrder; children?: React.Reac
 
 function Metric({ label, value, icon, alert = false }: any) { return <View style={styles.metric}><View style={[styles.metricIcon, alert && styles.metricIconAlert]}><MaterialCommunityIcons name={icon} size={22} color={alert ? COLORS.error : COLORS.primary} /></View><View><Text style={styles.metricValue}>{value}</Text><Text style={styles.metricLabel}>{label}</Text></View></View>; }
 function Action({ label, onPress, busy = false, disabled = false, secondary = false }: any) { return <TouchableOpacity disabled={busy || disabled} onPress={onPress} style={[styles.action, secondary && styles.actionSecondary, (busy || disabled) && styles.actionDisabled]}>{busy ? <ActivityIndicator color={secondary ? COLORS.primary : '#FFFFFF'} /> : <Text style={[styles.actionText, secondary && styles.actionTextSecondary]}>{label}</Text>}</TouchableOpacity>; }
-function workflowStep(c: ProviderCase, index: number) { const status = c.workflow?.status; if (index === 0) return c.workflow?.payment_status === 'paid' || c.workflow?.payment_status === 'not_required'; if (index === 1) return ['awaiting_results', 'awaiting_clinician', 'awaiting_appointment', 'appointment_scheduled', 'follow_up'].includes(status); if (index === 2) return ['awaiting_clinician', 'awaiting_appointment', 'appointment_scheduled', 'follow_up'].includes(status); return ['awaiting_appointment', 'appointment_scheduled', 'follow_up'].includes(status); }
+function workflowStep(c: ProviderCase, index: number) { const status = c.workflow?.status; if (index === 0) return ['paid','deferred'].includes(c.workflow?.payment_status); if (index === 1) return ['awaiting_results', 'awaiting_clinician', 'awaiting_appointment', 'appointment_scheduled', 'follow_up'].includes(status); if (index === 2) return ['awaiting_clinician', 'awaiting_appointment', 'appointment_scheduled', 'follow_up'].includes(status); return ['awaiting_appointment', 'appointment_scheduled', 'follow_up'].includes(status); }
 
 const styles = StyleSheet.create({
   shell: { flex: 1, flexDirection: 'row', backgroundColor: '#F8F5F5' },
@@ -358,4 +388,9 @@ const styles = StyleSheet.create({
   intelligenceHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }, reviewBadge: { borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: '#FFF0D6' }, reviewBadgeText: { color: '#7A4A00', fontSize: 9, fontWeight: '800', textTransform: 'capitalize' }, clinicalAlert: { borderRadius: 10, padding: 11, backgroundColor: '#FFEDEA', flexDirection: 'row', gap: 8, alignItems: 'center' }, suggestionCard: { borderRadius: 12, padding: 13, gap: 12, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E9DEE0', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' },
   decisionActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 }, decisionRow: { borderRadius: 11, padding: 12, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E9DEE0' },
   mobileNotice: { flex: 1, padding: 32, alignItems: 'center', justifyContent: 'center', gap: 12, backgroundColor: COLORS.background },
+  settingsPage: { flex: 1 }, settingsContent: { width: '100%', maxWidth: 860, alignSelf: 'center', gap: 16, paddingBottom: 40 },
+  availabilityToggle: { alignSelf: 'flex-start', borderRadius: 18, paddingHorizontal: 14, paddingVertical: 9, backgroundColor: COLORS.surfaceContainerHigh }, availabilityToggleOn: { backgroundColor: COLORS.primary },
+  availabilityRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 9 }, dayWide: { width: 54, minHeight: 42, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#DFD1D4' }, daySelected: { backgroundColor: COLORS.primary, borderColor: COLORS.primary }, dayTextSelected: { color: '#FFFFFF', fontSize: 11, fontWeight: '800', textTransform: 'capitalize' },
+  availabilityTime: { flex: 0, minWidth: 100, width: 110 }, disabledInput: { opacity: .45 },
+  walletRow: { minHeight: 60, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#E9DEE0', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 14 }, walletAmount: { color: COLORS.onSurface, fontSize: 14, fontWeight: '800' },
 });

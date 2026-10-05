@@ -1,5 +1,5 @@
 import { apiClient, storage, TOKEN_KEYS } from './client';
-import { AuthResponse, User, Session } from '../types';
+import { AuthResponse, User, Session, ClinicianSettings } from '../types';
 
 export const authApi = {
   async signup(payload: {
@@ -14,6 +14,7 @@ export const authApi = {
     bvn?: string;
     license_document_url?: string;
     identity_document_url?: string;
+    clinician_settings?: ClinicianSettings;
   }): Promise<AuthResponse> {
     const res = await apiClient.post<AuthResponse>('/v1/auth/signup', {
       timezone: 'Africa/Lagos',

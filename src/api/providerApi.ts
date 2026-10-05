@@ -51,8 +51,10 @@ export type ClinicalIntelligence = {
   knowledge_review_status: string;
   clinician_review_required: boolean;
 };
+export type ClinicianWallet = { available_minor:number; pending_minor:number; currency:string; entries:{case_id:string;patient_name:string;amount_minor:number;currency:string;status:string;created_at:string}[] };
 
 export const providerApi = {
+  async wallet(): Promise<ClinicianWallet> { return (await apiClient.get('/v1/provider/wallet')).data; },
   async listCases(): Promise<ProviderCase[]> {
     return (await apiClient.get('/v1/provider/care/cases')).data;
   },

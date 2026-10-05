@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { User } from '../types';
+import { ClinicianSettings, User } from '../types';
 import { authApi } from '../api/authApi';
 import { profileApi } from '../api/profileApi';
 import { storage, TOKEN_KEYS } from '../api/client';
@@ -18,7 +18,7 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-export type ClinicianSignup = { professional_title?: string; medical_license_number?: string; nin?: string; bvn?: string; license_document_url?: string; identity_document_url?: string };
+export type ClinicianSignup = { professional_title?: string; medical_license_number?: string; nin?: string; bvn?: string; license_document_url?: string; identity_document_url?: string; clinician_settings?: ClinicianSettings };
 
 /**
  * Falls back through display name → email local part so the greeting is always

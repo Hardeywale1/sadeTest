@@ -47,6 +47,7 @@ export interface Profile {
   license_document_url?: string;
   identity_document_url?: string;
   clinician_verification_status?: string;
+  clinician_settings?: ClinicianSettings;
   location?: {
     latitude: number;
     longitude: number;
@@ -56,6 +57,16 @@ export interface Profile {
   created_at: string;
   updated_at: string;
 }
+
+export type AvailabilityWindow = { day: string; start: string; end: string; enabled: boolean };
+export type ClinicianSettings = {
+  accepting_patients: boolean;
+  slot_duration_minutes: number;
+  consultation_fee_minor: number;
+  currency: 'NGN';
+  availability: AvailabilityWindow[];
+  unavailable_dates?: string[];
+};
 
 export interface Questionnaire {
   version: string;

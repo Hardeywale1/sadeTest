@@ -16,6 +16,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 type PortalRole = 'clinician' | 'lab';
 const CLINICIAN_PROFESSIONS = ['Medical doctor', 'Gynaecologist', 'Obstetrician-gynaecologist', 'Nurse', 'Midwife', 'Other clinician'];
+const WEEK_DAYS = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
 
 export const AuthScreen: React.FC<{ onBack?: () => void; portalRole?: PortalRole }> = ({ onBack, portalRole }) => {
   const { login, signup, logout } = useAuth();
@@ -30,6 +31,10 @@ export const AuthScreen: React.FC<{ onBack?: () => void; portalRole?: PortalRole
   const [bvn, setBvn] = useState('');
   const [licenseDocumentURL, setLicenseDocumentURL] = useState('');
   const [identityDocumentURL, setIdentityDocumentURL] = useState('');
+  const [availableDays, setAvailableDays] = useState<string[]>(WEEK_DAYS.slice(0, 5));
+  const [availabilityStart, setAvailabilityStart] = useState('09:00');
+  const [availabilityEnd, setAvailabilityEnd] = useState('17:00');
+  const [consultationFee, setConsultationFee] = useState('10000');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -40,6 +45,10 @@ export const AuthScreen: React.FC<{ onBack?: () => void; portalRole?: PortalRole
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       setErrorMessage('Enter a valid email address.');
+      return;
+    }
+    if (!isLoginTab && portalRole === 'clinician' && (!professionalTitle || availableDays.length === 0 || Number(consultationFee) <= 0 || availabilityStart >= availabilityEnd)) {
+      setErrorMessage('Set your profession, consultation fee and availability.');
       return;
     }
     setErrorMessage('');
@@ -57,6 +66,7 @@ export const AuthScreen: React.FC<{ onBack?: () => void; portalRole?: PortalRole
         const fallbackName = email.split('@')[0].replace(/[._-]+/g, ' ').trim();
         await signup(email, password, displayName.trim() || fallbackName, portalRole === 'lab' ? 'laboratory' : portalRole === 'clinician' ? 'clinician' : 'patient', portalRole === 'clinician' ? {
           professional_title: professionalTitle.trim(), medical_license_number: medicalLicenseNumber.trim(), nin: nin.trim(), bvn: bvn.trim(), license_document_url: licenseDocumentURL.trim(), identity_document_url: identityDocumentURL.trim(),
+          clinician_settings: { accepting_patients: true, slot_duration_minutes: 30, consultation_fee_minor: Math.round(Number(consultationFee) * 100), currency: 'NGN', availability: WEEK_DAYS.map((day) => ({ day, start: availabilityStart, end: availabilityEnd, enabled: availableDays.includes(day) })), unavailable_dates: [] },
         } : undefined);
       }
     } catch (err: any) {
@@ -122,6 +132,8 @@ export const AuthScreen: React.FC<{ onBack?: () => void; portalRole?: PortalRole
             <View style={styles.inputGroup}><Text style={styles.label}>BVN</Text><TextInput style={styles.input} value={bvn} onChangeText={setBvn} secureTextEntry /></View>
             <View style={styles.inputGroup}><Text style={styles.label}>Licence document URL</Text><TextInput style={styles.input} autoCapitalize="none" value={licenseDocumentURL} onChangeText={setLicenseDocumentURL} /></View>
             <View style={styles.inputGroup}><Text style={styles.label}>Identity document URL</Text><TextInput style={styles.input} autoCapitalize="none" value={identityDocumentURL} onChangeText={setIdentityDocumentURL} /></View>
+            <View style={styles.inputGroup}><Text style={styles.label}>Consultation fee</Text><TextInput style={styles.input} keyboardType="number-pad" value={consultationFee} onChangeText={setConsultationFee} /><Text style={styles.hint}>NGN</Text></View>
+            <View style={styles.inputGroup}><Text style={styles.label}>Availability</Text><View style={styles.days}>{WEEK_DAYS.map((day) => { const selected=availableDays.includes(day); return <TouchableOpacity key={day} style={[styles.day,selected&&styles.daySelected]} onPress={()=>setAvailableDays((days)=>selected?days.filter((item)=>item!==day):[...days,day])}><Text style={[styles.dayText,selected&&styles.dayTextSelected]}>{day.slice(0,3)}</Text></TouchableOpacity>})}</View><View style={styles.timeRow}><TextInput style={[styles.input,styles.timeInput]} value={availabilityStart} onChangeText={setAvailabilityStart} placeholder="09:00"/><TextInput style={[styles.input,styles.timeInput]} value={availabilityEnd} onChangeText={setAvailabilityEnd} placeholder="17:00"/></View><Text style={styles.hint}>30 minute appointments · Africa/Lagos</Text></View>
           </> : null}
 
           <View style={styles.inputGroup}>
@@ -259,6 +271,14 @@ const styles = StyleSheet.create({
   inputGroup: {
     marginBottom: 16,
   },
+  hint: { color: COLORS.onSurfaceVariant, fontSize: 11 },
+  days: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
+  day: { minWidth: 42, paddingVertical: 9, paddingHorizontal: 8, borderRadius: 10, alignItems: 'center', borderWidth: 1, borderColor: COLORS.surfaceContainerHighest },
+  daySelected: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  dayText: { color: COLORS.onSurfaceVariant, fontSize: 11, textTransform: 'capitalize' },
+  dayTextSelected: { color: '#FFFFFF', fontWeight: '700' },
+  timeRow: { flexDirection: 'row', gap: 8 },
+  timeInput: { flex: 1 },
   label: {
     fontSize: 12,
     fontWeight: '600',
