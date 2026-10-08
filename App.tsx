@@ -27,18 +27,23 @@ import { ProviderWorkspace } from './src/screens/ProviderWorkspace';
 import { ExternalLabHandoffScreen } from './src/screens/ExternalLabHandoffScreen';
 import { ExternalPharmacyHandoffScreen } from './src/screens/ExternalPharmacyHandoffScreen';
 import { LabRegistrationScreen } from './src/screens/LabRegistrationScreen';
+import { AdminDashboard } from './src/screens/AdminDashboard';
 import { onboardingApi } from './src/api/profileApi';
 import { COLORS } from './src/theme/colors';
 
 type TabType = 'dashboard' | 'cycle' | 'journal' | 'community' | 'care' | 'settings';
-type PublicScreen = 'landing' | 'patient-auth' | 'clinician-auth' | 'lab-auth';
+type PublicScreen = 'landing' | 'patient-auth' | 'clinician-auth' | 'lab-auth' | 'admin-auth';
+
+const isAdminHostname = () => Platform.OS === 'web' && typeof window !== 'undefined' && window.location.hostname.toLowerCase() === (process.env.EXPO_PUBLIC_ADMIN_HOST || 'admin.sade.com').toLowerCase();
 
 const initialPublicScreen = (): PublicScreen => {
   if (Platform.OS !== 'web' || typeof window === 'undefined') return 'landing';
+  if (isAdminHostname()) return 'admin-auth';
   const portal = new URLSearchParams(window.location.search).get('portal');
   if (portal === 'clinician') return 'clinician-auth';
   if (portal === 'lab') return 'lab-auth';
   if (portal === 'patient') return 'patient-auth';
+  if (portal === 'admin') return 'admin-auth';
   return 'landing';
 };
 
@@ -92,7 +97,7 @@ const AppContent: React.FC = () => {
   const openPublicScreen = (screen: PublicScreen) => {
     setPublicScreen(screen);
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      const portal = screen === 'clinician-auth' ? 'clinician' : screen === 'lab-auth' ? 'lab' : screen === 'patient-auth' ? 'patient' : '';
+      const portal = screen === 'clinician-auth' ? 'clinician' : screen === 'lab-auth' ? 'lab' : screen === 'patient-auth' ? 'patient' : screen === 'admin-auth' ? 'admin' : '';
       window.history.replaceState({}, '', portal ? `?portal=${portal}` : window.location.pathname);
     }
   };
@@ -138,17 +143,25 @@ const AppContent: React.FC = () => {
 
   if (!isAuthenticated) {
     if (publicScreen !== 'landing') {
-      const portalRole = publicScreen === 'clinician-auth' ? 'clinician' : publicScreen === 'lab-auth' ? 'lab' : undefined;
-      return <AuthScreen portalRole={portalRole} onBack={() => openPublicScreen('landing')} />;
+      const portalRole = publicScreen === 'clinician-auth' ? 'clinician' : publicScreen === 'lab-auth' ? 'lab' : publicScreen === 'admin-auth' ? 'admin' : undefined;
+      return <AuthScreen portalRole={portalRole} onBack={publicScreen === 'admin-auth' ? undefined : () => openPublicScreen('landing')} />;
     }
     return <LandingScreen onStart={() => openPublicScreen('patient-auth')} onSignIn={() => openPublicScreen('patient-auth')} onClinician={() => openPublicScreen('clinician-auth')} onLab={() => openPublicScreen('lab-auth')} />;
+  }
+
+  if (isAdminHostname() && user?.role !== 'admin') {
+    return <View style={styles.adminDenied}><MaterialCommunityIcons name="shield-lock-outline" size={38} color={COLORS.primary}/><Text style={styles.deniedTitle}>Administrator access required</Text><TouchableOpacity style={styles.deniedButton} onPress={logout}><Text style={styles.deniedButtonText}>Sign out</Text></TouchableOpacity></View>;
   }
 
   if (user?.role === 'lab_applicant' || (user?.role === 'lab' && labProfileOpen)) {
     return <LabRegistrationScreen onLogout={logout} onBack={user.role === 'lab' ? () => setLabProfileOpen(false) : undefined} />;
   }
 
-  if (user && (user.role === 'clinician' || user.role === 'lab' || user.role === 'admin')) {
+  if (user?.role === 'admin') {
+    return <AdminDashboard displayName={greetingName} onLogout={logout} />;
+  }
+
+  if (user && (user.role === 'clinician' || user.role === 'lab')) {
     return <ProviderWorkspace role={user.role} displayName={greetingName} onLogout={logout} onManageProfile={user.role === 'lab' ? () => setLabProfileOpen(true) : undefined} />;
   }
 
@@ -267,6 +280,10 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     marginTop: 12,
   },
+  adminDenied: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14, padding: 28, backgroundColor: COLORS.background },
+  deniedTitle: { color: COLORS.onSurface, fontFamily: 'serif', fontSize: 24 },
+  deniedButton: { minHeight: 44, paddingHorizontal: 22, borderRadius: 12, backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center' },
+  deniedButtonText: { color: '#FFFFFF', fontSize: 12, fontWeight: '800' },
   mainCanvas: {
     flex: 1,
     // Without this the canvas grows with its content on web and pushes the nav bar

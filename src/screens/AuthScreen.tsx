@@ -14,7 +14,7 @@ import { useAuth } from '../context/AuthContext';
 import { COLORS } from '../theme/colors';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-type PortalRole = 'clinician' | 'lab';
+type PortalRole = 'clinician' | 'lab' | 'admin';
 const CLINICIAN_PROFESSIONS = ['Medical doctor', 'Gynaecologist', 'Obstetrician-gynaecologist', 'Nurse', 'Midwife', 'Other clinician'];
 const WEEK_DAYS = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
 
@@ -58,7 +58,7 @@ export const AuthScreen: React.FC<{ onBack?: () => void; portalRole?: PortalRole
         const signedInUser = await login(email, password);
         if (portalRole && signedInUser.role !== portalRole && signedInUser.role !== 'admin' && !(portalRole === 'lab' && signedInUser.role === 'lab_applicant')) {
           await logout();
-          setErrorMessage(`${portalRole === 'lab' ? 'Laboratory' : 'Clinician'} access is required for this portal.`);
+          setErrorMessage(`${portalRole === 'lab' ? 'Laboratory' : portalRole === 'admin' ? 'Administrator' : 'Clinician'} access is required for this portal.`);
         }
       } else {
         // Fall back to the email local part rather than a generic label, so the
@@ -91,10 +91,10 @@ export const AuthScreen: React.FC<{ onBack?: () => void; portalRole?: PortalRole
             </TouchableOpacity>
           ) : null}
           <Text style={styles.brandTitle}>Sadé</Text>
-          <Text style={styles.brandSubtitle}>{portalRole === 'clinician' ? 'Clinician portal' : portalRole === 'lab' ? 'Laboratory portal' : 'Your health, connected.'}</Text>
+          <Text style={styles.brandSubtitle}>{portalRole === 'clinician' ? 'Clinician portal' : portalRole === 'lab' ? 'Laboratory portal' : portalRole === 'admin' ? 'Administration' : 'Your health, connected.'}</Text>
 
           {/* Toggle Bar */}
-          <View style={styles.toggleBar}>
+          {portalRole !== 'admin' ? <View style={styles.toggleBar}>
             <TouchableOpacity
               style={[styles.toggleBtn, isLoginTab && styles.toggleBtnActive]}
               onPress={() => setIsLoginTab(true)}
@@ -107,7 +107,7 @@ export const AuthScreen: React.FC<{ onBack?: () => void; portalRole?: PortalRole
             >
               <Text style={[styles.toggleText, !isLoginTab && styles.toggleTextActive]}>Create account</Text>
             </TouchableOpacity>
-          </View>
+          </View> : null}
 
           {/* Form */}
           {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
@@ -165,7 +165,7 @@ export const AuthScreen: React.FC<{ onBack?: () => void; portalRole?: PortalRole
             {loading ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text style={styles.submitBtnText}>{isLoginTab ? (portalRole ? 'Open workspace' : 'Welcome Back') : portalRole === 'lab' ? 'Register laboratory' : portalRole === 'clinician' ? 'Create clinician account' : 'Join Sadé'}</Text>
+              <Text style={styles.submitBtnText}>{isLoginTab ? (portalRole === 'admin' ? 'Open admin' : portalRole ? 'Open workspace' : 'Welcome Back') : portalRole === 'lab' ? 'Register laboratory' : portalRole === 'clinician' ? 'Create clinician account' : 'Join Sadé'}</Text>
             )}
           </TouchableOpacity>
         </View>
