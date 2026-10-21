@@ -78,6 +78,20 @@ export const ProviderWorkspace: React.FC<{ role: ProviderRole; displayName: stri
 
   useEffect(() => { void load(); }, []);
   useEffect(() => {
+    if (!current?.ai_job || !['queued', 'generating'].includes(current.ai_job.status)) return;
+    let active = true;
+    const refresh = async () => {
+      try {
+        const updated = await providerApi.getCase(current.id);
+        if (!active) return;
+        setCurrent(updated);
+        setCases((items) => items.map((item) => item.id === updated.id ? updated : item));
+      } catch { /* The next poll or a manual refresh can recover. */ }
+    };
+    const timer = setInterval(() => { void refresh(); }, 5000);
+    return () => { active = false; clearInterval(timer); };
+  }, [current?.id, current?.ai_job?.status]);
+  useEffect(() => {
     if (!current || role !== 'clinician') { setClinicalIntelligence(null); return; }
     let active = true;
     setClinicalLoading(true);
@@ -249,12 +263,14 @@ function ClinicianCase({ canPractice, current, busy, clinicalIntelligence, clini
       <Text style={styles.panelLabel}>Care summary</Text>
       <Text style={styles.panelTitle}>Clinical overview</Text>
       <Text style={styles.panelBody}>{current.care_summary?.overview || current.assessment?.title}</Text>
+      {(current.care_summary?.findings || []).length ? <><Text style={styles.panelTitle}>Clinical findings</Text>{current.care_summary.findings.map((item: string) => <Text key={item} style={styles.panelBody}>• {item}</Text>)}</> : null}
       <Text style={styles.panelTitle}>Recommendations</Text>
       {(current.care_summary?.recommendations || [current.assessment?.guidance]).filter(Boolean).map((item: string) => <Text key={item} style={styles.panelBody}>• {item}</Text>)}
       <Text style={styles.panelTitle}>Next plan</Text>
       {(current.care_summary?.next_plan || []).map((item: string) => <Text key={item} style={styles.panelBody}>• {item}</Text>)}
       <Text style={styles.muted}>Draft for clinician review</Text>
-      {current.brief?.ai_available ? <Action label="Generate with Sadé AI" busy={busy} secondary onPress={() => update({ action: 'generate_summary' })} /> : null}
+      {current.ai_job && ['queued', 'generating'].includes(current.ai_job.status) ? <View style={styles.progressStep}><ActivityIndicator size="small" color={COLORS.primary} /><Text style={styles.progressText}>Preparing clinical brief</Text></View> : null}
+      {current.brief?.ai_available && !current.ai_job?.status.match(/queued|generating/) ? <Action label={current.ai_job?.status === 'failed' ? 'Retry summary' : 'Generate with Sadé AI'} busy={busy} secondary onPress={() => update({ action: 'generate_summary' })} /> : null}
     </View>
     <View style={styles.panel}>
       <Text style={styles.panelLabel}>Patient-reported summary</Text>
