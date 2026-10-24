@@ -34,6 +34,7 @@ export type ClinicalTestSuggestion = {
   priority: string;
   reasons: string[];
   rule_ids: string[];
+  evidence_ids: string[];
   review_status: string;
   requires_clinician_confirmation: boolean;
 };
@@ -49,6 +50,7 @@ export type ClinicalIntelligence = {
   conditional_tests: ClinicalTestSuggestion[];
   triggered_rules: { rule_id: string; name: string; severity: string; action_types: string[] }[];
   knowledge_review_status: string;
+  knowledge_version: string;
   clinician_review_required: boolean;
 };
 export type ClinicianWallet = { available_minor:number; pending_minor:number; currency:string; entries:{case_id:string;patient_name:string;amount_minor:number;currency:string;status:string;created_at:string}[] };
