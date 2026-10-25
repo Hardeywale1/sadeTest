@@ -28,6 +28,7 @@ import { ExternalLabHandoffScreen } from './src/screens/ExternalLabHandoffScreen
 import { ExternalPharmacyHandoffScreen } from './src/screens/ExternalPharmacyHandoffScreen';
 import { LabRegistrationScreen } from './src/screens/LabRegistrationScreen';
 import { AdminDashboard } from './src/screens/AdminDashboard';
+import { DemoAccessScreen } from './src/screens/DemoAccessScreen';
 import { onboardingApi } from './src/api/profileApi';
 import { COLORS } from './src/theme/colors';
 
@@ -35,6 +36,7 @@ type TabType = 'dashboard' | 'cycle' | 'journal' | 'community' | 'care' | 'setti
 type PublicScreen = 'landing' | 'patient-auth' | 'clinician-auth' | 'lab-auth' | 'admin-auth';
 
 const isAdminHostname = () => Platform.OS === 'web' && typeof window !== 'undefined' && window.location.hostname.toLowerCase() === (process.env.EXPO_PUBLIC_ADMIN_HOST || 'admin.sade.com').toLowerCase();
+const isDemoHostname = () => Platform.OS === 'web' && typeof window !== 'undefined' && (window.location.hostname.toLowerCase() === (process.env.EXPO_PUBLIC_DEMO_HOST || 'demo.sade.ng').toLowerCase() || new URLSearchParams(window.location.search).get('demo') === '1');
 
 const initialPublicScreen = (): PublicScreen => {
   if (Platform.OS !== 'web' || typeof window === 'undefined') return 'landing';
@@ -81,7 +83,7 @@ const useWebViewportFix = () => {
 };
 
 const AppContent: React.FC = () => {
-  const { isAuthenticated, isLoading, user, greetingName, logout } = useAuth();
+  const { isAuthenticated, isLoading, user, greetingName, logout, loginDemo, exitDemo } = useAuth();
   const [publicScreen, setPublicScreen] = useState<PublicScreen>(initialPublicScreen);
   const [currentTab, setCurrentTab] = useState<TabType>('dashboard');
   const [onboardingState, setOnboardingState] = useState<'checking' | 'required' | 'complete'>('checking');
@@ -142,6 +144,7 @@ const AppContent: React.FC = () => {
   }
 
   if (!isAuthenticated) {
+    if (isDemoHostname()) return <DemoAccessScreen onSelect={loginDemo} />;
     if (publicScreen !== 'landing') {
       const portalRole = publicScreen === 'clinician-auth' ? 'clinician' : publicScreen === 'lab-auth' ? 'lab' : publicScreen === 'admin-auth' ? 'admin' : undefined;
       return <AuthScreen portalRole={portalRole} onBack={publicScreen === 'admin-auth' ? undefined : () => openPublicScreen('landing')} />;
@@ -149,20 +152,22 @@ const AppContent: React.FC = () => {
     return <LandingScreen onStart={() => openPublicScreen('patient-auth')} onSignIn={() => openPublicScreen('patient-auth')} onClinician={() => openPublicScreen('clinician-auth')} onLab={() => openPublicScreen('lab-auth')} />;
   }
 
+  const withDemoControls = (content: React.ReactNode) => isDemoHostname() ? <View style={styles.demoShell}>{content}<TouchableOpacity style={styles.demoSwitch} onPress={exitDemo} accessibilityRole="button"><MaterialCommunityIcons name="swap-horizontal" size={17} color="#FFFFFF"/><Text style={styles.demoSwitchText}>Switch demo</Text></TouchableOpacity></View> : content;
+
   if (isAdminHostname() && user?.role !== 'admin') {
     return <View style={styles.adminDenied}><MaterialCommunityIcons name="shield-lock-outline" size={38} color={COLORS.primary}/><Text style={styles.deniedTitle}>Administrator access required</Text><TouchableOpacity style={styles.deniedButton} onPress={logout}><Text style={styles.deniedButtonText}>Sign out</Text></TouchableOpacity></View>;
   }
 
   if (user?.role === 'lab_applicant' || (user?.role === 'lab' && labProfileOpen)) {
-    return <LabRegistrationScreen onLogout={logout} onBack={user.role === 'lab' ? () => setLabProfileOpen(false) : undefined} />;
+    return withDemoControls(<LabRegistrationScreen onLogout={logout} onBack={user.role === 'lab' ? () => setLabProfileOpen(false) : undefined} />);
   }
 
   if (user?.role === 'admin') {
-    return <AdminDashboard displayName={greetingName} onLogout={logout} />;
+    return withDemoControls(<AdminDashboard displayName={greetingName} onLogout={logout} />);
   }
 
   if (user && (user.role === 'clinician' || user.role === 'lab')) {
-    return <ProviderWorkspace role={user.role} displayName={greetingName} onLogout={logout} onManageProfile={user.role === 'lab' ? () => setLabProfileOpen(true) : undefined} />;
+    return withDemoControls(<ProviderWorkspace role={user.role} displayName={greetingName} onLogout={logout} onManageProfile={user.role === 'lab' ? () => setLabProfileOpen(true) : undefined} />);
   }
 
   if (onboardingState === 'checking') {
@@ -177,7 +182,7 @@ const AppContent: React.FC = () => {
   // First-run onboarding is the only flow that owns the whole screen: there is
   // nothing to navigate to yet. Every other screen keeps the tab bar.
   if (onboardingState === 'required') {
-    return <OnboardingScreen onComplete={() => setOnboardingState('complete')} />;
+    return withDemoControls(<OnboardingScreen onComplete={() => setOnboardingState('complete')} />);
   }
 
   const renderActiveScreen = () => {
@@ -207,7 +212,7 @@ const AppContent: React.FC = () => {
 
   const headerSubtitle = careJourneyOpen ? 'Health' : goalsOpen ? 'Goals' : TAB_SUBTITLE[currentTab];
 
-  return (
+  return withDemoControls(
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFF8F8" />
       <View style={styles.webContainer}>
@@ -284,6 +289,9 @@ const styles = StyleSheet.create({
   deniedTitle: { color: COLORS.onSurface, fontFamily: 'serif', fontSize: 24 },
   deniedButton: { minHeight: 44, paddingHorizontal: 22, borderRadius: 12, backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center' },
   deniedButtonText: { color: '#FFFFFF', fontSize: 12, fontWeight: '800' },
+  demoShell: { flex: 1, position: 'relative' },
+  demoSwitch: { position: 'absolute', zIndex: 1000, right: 14, top: Platform.OS === 'web' ? 14 : 45, minHeight: 38, paddingHorizontal: 13, borderRadius: 999, backgroundColor: COLORS.primary, flexDirection: 'row', alignItems: 'center', gap: 6, shadowColor: '#000000', shadowOpacity: .15, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } },
+  demoSwitchText: { color: '#FFFFFF', fontSize: 11, fontWeight: '800' },
   mainCanvas: {
     flex: 1,
     // Without this the canvas grows with its content on web and pushes the nav bar

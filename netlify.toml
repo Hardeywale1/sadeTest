@@ -5,6 +5,9 @@
 [build.environment]
   NODE_VERSION = "20"
   EXPO_OFFLINE = "1"
+  EXPO_PUBLIC_API_URL = "https://jwmbpisre3.us-east-1.awsapprunner.com"
+  EXPO_PUBLIC_DEMO_HOST = "demo.sade.ng"
+  EXPO_PUBLIC_PAYSTACK_PUBLIC_KEY = "pk_test_038974eed0ef702b272aaf0fb9e732fc99833096"
 
 [[redirects]]
   from = "/*"

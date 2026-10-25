@@ -9,10 +9,13 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Linking,
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { COLORS } from '../theme/colors';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { SubscriptionPlan } from '../types';
+import { paymentsApi } from '../api/paymentsApi';
 
 type PortalRole = 'clinician' | 'lab' | 'admin';
 const CLINICIAN_PROFESSIONS = ['Medical doctor', 'Gynaecologist', 'Obstetrician-gynaecologist', 'Nurse', 'Midwife', 'Other clinician'];
@@ -37,6 +40,12 @@ export const AuthScreen: React.FC<{ onBack?: () => void; portalRole?: PortalRole
   const [consultationFee, setConsultationFee] = useState('10000');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [signupStep, setSignupStep] = useState<'account' | 'plan'>('account');
+  const [selectedPlan] = useState<SubscriptionPlan>('basic');
+
+  const patientPlanStep = !isLoginTab && !portalRole && signupStep === 'plan';
+  const trialEnd = new Date();
+  trialEnd.setDate(trialEnd.getDate() + 30);
 
   const handleSubmit = async () => {
     if (!email || !password) {
@@ -49,6 +58,11 @@ export const AuthScreen: React.FC<{ onBack?: () => void; portalRole?: PortalRole
     }
     if (!isLoginTab && portalRole === 'clinician' && (!professionalTitle || availableDays.length === 0 || Number(consultationFee) <= 0 || availabilityStart >= availabilityEnd)) {
       setErrorMessage('Set your profession, consultation fee and availability.');
+      return;
+    }
+    if (!isLoginTab && !portalRole && signupStep === 'account') {
+      setErrorMessage('');
+      setSignupStep('plan');
       return;
     }
     setErrorMessage('');
@@ -67,7 +81,15 @@ export const AuthScreen: React.FC<{ onBack?: () => void; portalRole?: PortalRole
         await signup(email, password, displayName.trim() || fallbackName, portalRole === 'lab' ? 'laboratory' : portalRole === 'clinician' ? 'clinician' : 'patient', portalRole === 'clinician' ? {
           professional_title: professionalTitle.trim(), medical_license_number: medicalLicenseNumber.trim(), nin: nin.trim(), bvn: bvn.trim(), license_document_url: licenseDocumentURL.trim(), identity_document_url: identityDocumentURL.trim(),
           clinician_settings: { accepting_patients: true, slot_duration_minutes: 30, consultation_fee_minor: Math.round(Number(consultationFee) * 100), currency: 'NGN', availability: WEEK_DAYS.map((day) => ({ day, start: availabilityStart, end: availabilityEnd, enabled: availableDays.includes(day) })), unavailable_dates: [] },
-        } : undefined);
+        } : undefined, !portalRole ? selectedPlan : undefined);
+        if (!portalRole) {
+          try {
+            const checkout = await paymentsApi.initializePaystack();
+            await Linking.openURL(checkout.authorization_url);
+          } catch (paymentError: any) {
+            if (paymentError?.response?.status !== 503) throw paymentError;
+          }
+        }
       }
     } catch (err: any) {
       const msg = err.response?.data?.error || 'Authentication failed. Check details.';
@@ -97,13 +119,13 @@ export const AuthScreen: React.FC<{ onBack?: () => void; portalRole?: PortalRole
           {portalRole !== 'admin' ? <View style={styles.toggleBar}>
             <TouchableOpacity
               style={[styles.toggleBtn, isLoginTab && styles.toggleBtnActive]}
-              onPress={() => setIsLoginTab(true)}
+              onPress={() => { setIsLoginTab(true); setSignupStep('account'); setErrorMessage(''); }}
             >
               <Text style={[styles.toggleText, isLoginTab && styles.toggleTextActive]}>Sign in</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.toggleBtn, !isLoginTab && styles.toggleBtnActive]}
-              onPress={() => setIsLoginTab(false)}
+              onPress={() => { setIsLoginTab(false); setSignupStep('account'); setErrorMessage(''); }}
             >
               <Text style={[styles.toggleText, !isLoginTab && styles.toggleTextActive]}>Create account</Text>
             </TouchableOpacity>
@@ -111,6 +133,24 @@ export const AuthScreen: React.FC<{ onBack?: () => void; portalRole?: PortalRole
 
           {/* Form */}
           {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+
+          {patientPlanStep ? <>
+            <Text style={styles.trialTitle}>Try Sadé free for 30 days</Text>
+            <Text style={styles.trialSubtitle}>Your Basic membership begins after the free trial.</Text>
+            {([
+              { id: 'basic' as const, name: 'Basic', price: '₦3,000', features: ['Cycle and symptom tracking', 'Period summaries', 'Journal, goals and community'] },
+            ]).map((plan) => {
+              const selected = selectedPlan === plan.id;
+              return <View key={plan.id} style={[styles.planCard, selected && styles.planCardSelected]} accessibilityRole="radio" accessibilityState={{ checked: selected }}>
+                <View style={styles.planTop}><View><Text style={styles.planName}>{plan.name}</Text><Text style={styles.planPrice}>{plan.price}<Text style={styles.planPeriod}> / month</Text></Text></View><MaterialCommunityIcons name={selected ? 'radiobox-marked' : 'radiobox-blank'} size={23} color={selected ? COLORS.primary : COLORS.outline} /></View>
+                {plan.features.map((feature) => <View key={feature} style={styles.featureRow}><MaterialCommunityIcons name="check" size={16} color={COLORS.primary} /><Text style={styles.featureText}>{feature}</Text></View>)}
+              </View>;
+            })}
+            <View style={styles.securePayment}><MaterialCommunityIcons name="shield-lock-outline" size={21} color={COLORS.primary} /><View style={styles.securePaymentCopy}><Text style={styles.securePaymentTitle}>Secure card setup</Text><Text style={styles.securePaymentText}>Paystack collects your card details. Sadé never receives or stores them.</Text></View></View>
+            <View style={styles.trialTerms}><Text style={styles.trialTermsStrong}>30 days free</Text><Text style={styles.trialTermsText}>Your membership starts {trialEnd.toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}. Paystack Test Mode will verify the card before scheduling the subscription. Consultations, tests and medicines are charged separately.</Text></View>
+            <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} disabled={loading}>{loading ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.submitBtnText}>Continue to Paystack</Text>}</TouchableOpacity>
+            <TouchableOpacity style={styles.editAccount} onPress={() => setSignupStep('account')}><Text style={styles.editAccountText}>Edit account details</Text></TouchableOpacity>
+          </> : <>
 
           {!isLoginTab && (
             <View style={styles.inputGroup}>
@@ -165,9 +205,10 @@ export const AuthScreen: React.FC<{ onBack?: () => void; portalRole?: PortalRole
             {loading ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text style={styles.submitBtnText}>{isLoginTab ? (portalRole === 'admin' ? 'Open admin' : portalRole ? 'Open workspace' : 'Welcome Back') : portalRole === 'lab' ? 'Register laboratory' : portalRole === 'clinician' ? 'Create clinician account' : 'Join Sadé'}</Text>
+              <Text style={styles.submitBtnText}>{isLoginTab ? (portalRole === 'admin' ? 'Open admin' : portalRole ? 'Open workspace' : 'Sign in') : portalRole === 'lab' ? 'Register laboratory' : portalRole === 'clinician' ? 'Create clinician account' : 'Continue'}</Text>
             )}
           </TouchableOpacity>
+          </>}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -320,4 +361,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
+  trialTitle: { color: COLORS.onSurface, fontFamily: 'serif', fontSize: 25, fontWeight: '700', textAlign: 'center' },
+  trialSubtitle: { color: COLORS.onSurfaceVariant, fontSize: 12, textAlign: 'center', marginTop: 5, marginBottom: 16 },
+  planCard: { borderWidth: 1, borderColor: COLORS.surfaceContainerHighest, borderRadius: 18, padding: 16, marginBottom: 10, backgroundColor: COLORS.cardBg },
+  planCardSelected: { borderWidth: 2, borderColor: COLORS.primary, backgroundColor: COLORS.surfaceContainerLow },
+  planTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 },
+  planName: { color: COLORS.onSurface, fontSize: 16, fontWeight: '800' },
+  planPrice: { color: COLORS.primary, fontSize: 20, fontWeight: '800', marginTop: 2 },
+  planPeriod: { color: COLORS.onSurfaceVariant, fontSize: 11, fontWeight: '500' },
+  featureRow: { flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: 5 },
+  featureText: { flex: 1, color: COLORS.onSurfaceVariant, fontSize: 12, lineHeight: 17 },
+  securePayment: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 14, padding: 13, marginTop: 8, backgroundColor: COLORS.surfaceContainerLow },
+  securePaymentCopy: { flex: 1 },
+  securePaymentTitle: { color: COLORS.onSurface, fontSize: 13, fontWeight: '800' },
+  securePaymentText: { color: COLORS.onSurfaceVariant, fontSize: 11, lineHeight: 16, marginTop: 2 },
+  trialTerms: { borderRadius: 14, padding: 13, marginTop: 4, backgroundColor: COLORS.surfaceContainerHigh },
+  trialTermsStrong: { color: COLORS.primary, fontSize: 14, fontWeight: '800', marginBottom: 3 },
+  trialTermsText: { color: COLORS.onSurfaceVariant, fontSize: 11, lineHeight: 17 },
+  editAccount: { alignItems: 'center', paddingVertical: 12 },
+  editAccountText: { color: COLORS.primary, fontSize: 12, fontWeight: '700' },
 });

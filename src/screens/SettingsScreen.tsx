@@ -118,6 +118,18 @@ export const SettingsScreen: React.FC<{ onEditOnboarding?: () => void; onManageG
         {profile?.location ? <Text style={styles.locationStatus}>Location available for nearby care matching.</Text> : null}
       </View>
 
+      {user?.subscription ? <>
+        <Text style={styles.sectionHeader}>Membership</Text>
+        <View style={styles.card}>
+          <View style={styles.membershipTop}>
+            <View><Text style={styles.membershipPlan}>{user.subscription.plan === 'premium' ? 'Premium' : 'Basic'}</Text><Text style={styles.membershipPrice}>{new Intl.NumberFormat('en-NG', { style: 'currency', currency: user.subscription.currency, maximumFractionDigits: 0 }).format(user.subscription.amount_minor / 100)} / month</Text></View>
+            <View style={styles.trialBadge}><Text style={styles.trialBadgeText}>{user.subscription.status === 'trialing' ? 'FREE TRIAL' : user.subscription.status.replace('_', ' ').toUpperCase()}</Text></View>
+          </View>
+          {user.subscription.status === 'trialing' ? <Text style={styles.membershipMeta}>Trial ends {new Date(user.subscription.trial_ends_at).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}</Text> : null}
+          <Text style={styles.membershipMeta}>Payment method: {user.subscription.payment_method_status === 'added' ? 'Added' : 'Not added'}</Text>
+        </View>
+      </> : null}
+
       <Text style={styles.sectionHeader}>Personalization</Text>
       <TouchableOpacity style={styles.personalizationCard} onPress={onEditOnboarding}>
         <View style={styles.personalizationCopy}>
@@ -267,6 +279,12 @@ const styles = StyleSheet.create({
   locationBtn: { borderRadius: 99, borderWidth: 1, borderColor: COLORS.primary, paddingVertical: 11, alignItems: 'center', marginTop: 10 },
   locationBtnText: { color: COLORS.primary, fontSize: 13, fontWeight: '700' },
   locationStatus: { color: COLORS.onSurfaceVariant, fontSize: 11, marginTop: 8, textAlign: 'center' },
+  membershipTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 },
+  membershipPlan: { color: COLORS.onSurface, fontSize: 17, fontWeight: '800' },
+  membershipPrice: { color: COLORS.primary, fontSize: 13, fontWeight: '700', marginTop: 3 },
+  membershipMeta: { color: COLORS.onSurfaceVariant, fontSize: 12, marginTop: 10 },
+  trialBadge: { borderRadius: 99, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: COLORS.surfaceContainerHigh },
+  trialBadgeText: { color: COLORS.primary, fontSize: 9, fontWeight: '800', letterSpacing: 0.5 },
   sessionCard: {
     backgroundColor: COLORS.cardBg,
     borderRadius: 14,

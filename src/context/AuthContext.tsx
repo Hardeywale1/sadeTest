@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { ClinicianSettings, User } from '../types';
+import { ClinicianSettings, DemoRole, SubscriptionPlan, User } from '../types';
 import { authApi } from '../api/authApi';
 import { profileApi } from '../api/profileApi';
 import { storage, TOKEN_KEYS } from '../api/client';
@@ -11,8 +11,10 @@ interface AuthContextType {
   /** Display name to greet the user with, already trimmed to a first name. */
   greetingName: string;
   login: (email: string, password: string) => Promise<User>;
-  signup: (email: string, password: string, displayName: string, accountType?: 'patient' | 'laboratory' | 'clinician', clinician?: ClinicianSignup) => Promise<void>;
+  loginDemo: (role: DemoRole) => Promise<User>;
+  signup: (email: string, password: string, displayName: string, accountType?: 'patient' | 'laboratory' | 'clinician', clinician?: ClinicianSignup, plan?: SubscriptionPlan) => Promise<User>;
   logout: () => Promise<void>;
+  exitDemo: () => Promise<void>;
   /** Re-reads the profile so a renamed account is reflected everywhere. */
   refreshUser: () => Promise<void>;
 }
@@ -80,15 +82,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return res.user;
   };
 
-  const signup = async (email: string, password: string, displayName: string, accountType: 'patient' | 'laboratory' | 'clinician' = 'patient', clinician: ClinicianSignup = {}) => {
+  const loginDemo = async (role: DemoRole) => {
+    const res = await authApi.demoLogin(role);
+    setUser(res.user);
+    return res.user;
+  };
+
+  const signup = async (email: string, password: string, displayName: string, accountType: 'patient' | 'laboratory' | 'clinician' = 'patient', clinician: ClinicianSignup = {}, plan?: SubscriptionPlan) => {
     const res = await authApi.signup({
       email,
       password,
       display_name: displayName,
       account_type: accountType,
       ...clinician,
+      ...(accountType === 'patient' && plan ? { plan } : {}),
     });
     setUser(res.user);
+    return res.user;
   };
 
   const logout = async () => {
@@ -101,6 +111,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const exitDemo = async () => {
+    await storage.clearAuth();
+    setUser(null);
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -109,8 +124,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isAuthenticated: !!user,
         greetingName: resolveGreetingName(user),
         login,
+        loginDemo,
         signup,
         logout,
+        exitDemo,
         refreshUser: syncProfile,
       }}
     >

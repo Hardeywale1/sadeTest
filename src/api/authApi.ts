@@ -1,5 +1,12 @@
 import { apiClient, storage, TOKEN_KEYS } from './client';
-import { AuthResponse, User, Session, ClinicianSettings } from '../types';
+import { AuthResponse, User, Session, ClinicianSettings, SubscriptionPlan, DemoRole } from '../types';
+
+const saveAuth = async (response: AuthResponse) => {
+  if (!response.access_token) return;
+  await storage.setItem(TOKEN_KEYS.ACCESS_TOKEN, response.access_token);
+  await storage.setItem(TOKEN_KEYS.REFRESH_TOKEN, response.refresh_token);
+  await storage.setItem(TOKEN_KEYS.USER_DATA, JSON.stringify(response.user));
+};
 
 export const authApi = {
   async signup(payload: {
@@ -15,26 +22,25 @@ export const authApi = {
     license_document_url?: string;
     identity_document_url?: string;
     clinician_settings?: ClinicianSettings;
+    plan?: SubscriptionPlan;
   }): Promise<AuthResponse> {
     const res = await apiClient.post<AuthResponse>('/v1/auth/signup', {
       timezone: 'Africa/Lagos',
       ...payload,
     });
-    if (res.data.access_token) {
-      await storage.setItem(TOKEN_KEYS.ACCESS_TOKEN, res.data.access_token);
-      await storage.setItem(TOKEN_KEYS.REFRESH_TOKEN, res.data.refresh_token);
-      await storage.setItem(TOKEN_KEYS.USER_DATA, JSON.stringify(res.data.user));
-    }
+    await saveAuth(res.data);
     return res.data;
   },
 
   async login(payload: { email: string; password: string }): Promise<AuthResponse> {
     const res = await apiClient.post<AuthResponse>('/v1/auth/login', payload);
-    if (res.data.access_token) {
-      await storage.setItem(TOKEN_KEYS.ACCESS_TOKEN, res.data.access_token);
-      await storage.setItem(TOKEN_KEYS.REFRESH_TOKEN, res.data.refresh_token);
-      await storage.setItem(TOKEN_KEYS.USER_DATA, JSON.stringify(res.data.user));
-    }
+    await saveAuth(res.data);
+    return res.data;
+  },
+
+  async demoLogin(role: DemoRole): Promise<AuthResponse> {
+    const res = await apiClient.post<AuthResponse>('/v1/auth/demo', { role });
+    await saveAuth(res.data);
     return res.data;
   },
 

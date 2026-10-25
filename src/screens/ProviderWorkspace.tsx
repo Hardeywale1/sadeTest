@@ -33,6 +33,16 @@ const STATUS_LABELS: Record<string, string> = {
 
 const statusLabel = (value?: string) => STATUS_LABELS[value || ''] || 'New case';
 const concernLabel = (value?: string) => (value || 'Patient care').replaceAll('_', ' ');
+const conditionStatusLabel = (value?: string) => value === 'must_exclude' ? 'Needs to be ruled out' : 'Possible condition';
+const cleanClinicalEvidence = (values?: string[]) => {
+  const seen = new Set<string>();
+  return (values || []).flatMap((value) => value.split(/\r?\n/)).map((value) => value.trim().replace(/^[•*-]\s*/, '')).filter((value) => value && !/^evidence\s*id\s*:/i.test(value)).map((value) => value.replace(/^text\s*:\s*/i, '').trim()).filter((value) => {
+    const key = value.toLocaleLowerCase();
+    if (!value || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
 
 export const ProviderWorkspace: React.FC<{ role: ProviderRole; displayName: string; onLogout: () => void; onManageProfile?: () => void }> = ({ role, displayName, onLogout, onManageProfile }) => {
   const { width } = useWindowDimensions();
@@ -274,7 +284,7 @@ function ClinicianCase({ canPractice, current, busy, clinicalIntelligence, clini
       {current.brief?.ai_available && !current.ai_job?.status.match(/dispatch_pending|queued|generating/) ? <Action label={current.ai_job?.status === 'failed' ? 'Retry summary' : 'Generate with Sadé AI'} busy={busy} secondary onPress={() => update({ action: 'generate_summary' })} /> : null}
     </View>
     {current.ai_job?.gemma_context && current.ai_job.medgemma_status !== 'completed' ? <GemmaContextPanel value={current.ai_job.gemma_context} /> : null}
-    {(current.care_summary?.differential || []).length ? <View style={styles.panel}><Text style={styles.panelLabel}>Possible differential diagnoses</Text><Text style={styles.muted}>Clinical considerations for physician review. These are not confirmed diagnoses.</Text>{current.care_summary.differential!.map((item:any)=><View key={item.condition} style={styles.suggestionCard}><View style={styles.orderCopy}><Text style={styles.panelTitle}>{item.condition}</Text><Text style={styles.statusText}>{item.status.replaceAll('_',' ')}</Text><Text style={styles.panelBody}>{item.assessment}</Text>{item.supporting_evidence.map((value:string)=><Text key={value} style={styles.panelBody}>• {value}</Text>)}{item.contradicting_evidence?.length?<Text style={styles.muted}>Evidence against: {item.contradicting_evidence.join('; ')}</Text>:null}{item.missing_information?.length?<Text style={styles.muted}>Missing: {item.missing_information.join('; ')}</Text>:null}</View></View>)}</View>:null}
+    {(current.care_summary?.differential || []).length ? <View style={styles.panel}><Text style={styles.panelLabel}>Possible conditions</Text><Text style={styles.muted}>Suggestions for the doctor to review. These are not confirmed diagnoses.</Text>{current.care_summary.differential!.map((item:any)=>{const supporting=cleanClinicalEvidence(item.supporting_evidence);const against=cleanClinicalEvidence(item.contradicting_evidence);const missing=cleanClinicalEvidence(item.missing_information);return <View key={item.condition} style={styles.suggestionCard}><View style={styles.orderCopy}><Text style={styles.panelTitle}>{item.condition}</Text><Text style={styles.statusText}>{conditionStatusLabel(item.status)}</Text><Text style={styles.panelBody}>{item.assessment}</Text>{supporting.map((value:string)=><Text key={value} style={styles.panelBody}>• {value}</Text>)}{against.length?<Text style={styles.muted}>What does not fit: {against.join('; ')}</Text>:null}{missing.length?<Text style={styles.muted}>More information needed: {missing.join('; ')}</Text>:null}</View></View>})}</View>:null}
     <View style={styles.panel}>
       <Text style={styles.panelLabel}>Evidence record</Text>
       <View style={styles.factGrid}>{(current.facts || []).filter((fact: any) => fact.id !== 'triage.guidance').map((fact: any) => <View key={fact.id} style={styles.fact}><Text style={styles.factLabel}>{fact.label}</Text><Text style={styles.factValue}>{fact.value}</Text><Text style={styles.muted}>{(fact.verification_status || 'legacy_record').replaceAll('_', ' ')} · {(fact.temporal_status || 'unknown').replaceAll('_', ' ')}</Text></View>)}</View>

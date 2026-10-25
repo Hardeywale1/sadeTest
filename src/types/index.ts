@@ -2,6 +2,8 @@ declare global {
   namespace NodeJS {
     interface ProcessEnv {
       EXPO_PUBLIC_API_URL?: string;
+      EXPO_PUBLIC_PAYSTACK_PUBLIC_KEY?: string;
+      EXPO_PUBLIC_DEMO_HOST?: string;
       [key: string]: string | undefined;
     }
   }
@@ -15,6 +17,21 @@ export interface User {
   created_at: string;
   updated_at: string;
   role: 'patient' | 'clinician' | 'lab_applicant' | 'lab' | 'admin';
+  subscription?: Subscription;
+}
+
+export type SubscriptionPlan = 'basic' | 'premium';
+
+export interface Subscription {
+  plan: SubscriptionPlan;
+  status: 'trialing' | 'active' | 'past_due' | 'cancelled' | 'expired';
+  billing_interval: 'monthly';
+  currency: 'NGN';
+  amount_minor: number;
+  trial_started_at: string;
+  trial_ends_at: string;
+  payment_method_status: 'not_added' | 'added';
+  auto_renew: boolean;
 }
 
 export interface Session {
@@ -31,6 +48,8 @@ export interface AuthResponse {
   access_token: string;
   refresh_token: string;
 }
+
+export type DemoRole = 'patient' | 'clinician' | 'lab';
 
 export interface Profile {
   user_id: string;
