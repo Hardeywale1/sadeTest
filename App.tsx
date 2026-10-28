@@ -29,6 +29,7 @@ import { ExternalPharmacyHandoffScreen } from './src/screens/ExternalPharmacyHan
 import { LabRegistrationScreen } from './src/screens/LabRegistrationScreen';
 import { AdminDashboard } from './src/screens/AdminDashboard';
 import { DemoAccessScreen } from './src/screens/DemoAccessScreen';
+import { MembershipSetupScreen, PaymentReturnScreen } from './src/screens/MembershipScreen';
 import { onboardingApi } from './src/api/profileApi';
 import { COLORS } from './src/theme/colors';
 
@@ -37,6 +38,7 @@ type PublicScreen = 'landing' | 'patient-auth' | 'clinician-auth' | 'lab-auth' |
 
 const isAdminHostname = () => Platform.OS === 'web' && typeof window !== 'undefined' && window.location.hostname.toLowerCase() === (process.env.EXPO_PUBLIC_ADMIN_HOST || 'admin.sade.com').toLowerCase();
 const isDemoHostname = () => Platform.OS === 'web' && typeof window !== 'undefined' && (window.location.hostname.toLowerCase() === (process.env.EXPO_PUBLIC_DEMO_HOST || 'demo.sade.ng').toLowerCase() || new URLSearchParams(window.location.search).get('demo') === '1');
+const isPaymentReturn = () => Platform.OS === 'web' && typeof window !== 'undefined' && window.location.pathname === '/payment/callback';
 
 const initialPublicScreen = (): PublicScreen => {
   if (Platform.OS !== 'web' || typeof window === 'undefined') return 'landing';
@@ -83,7 +85,7 @@ const useWebViewportFix = () => {
 };
 
 const AppContent: React.FC = () => {
-  const { isAuthenticated, isLoading, user, greetingName, logout, loginDemo, exitDemo } = useAuth();
+  const { isAuthenticated, isLoading, user, greetingName, logout, loginDemo, exitDemo, applySubscription } = useAuth();
   const [publicScreen, setPublicScreen] = useState<PublicScreen>(initialPublicScreen);
   const [currentTab, setCurrentTab] = useState<TabType>('dashboard');
   const [onboardingState, setOnboardingState] = useState<'checking' | 'required' | 'complete'>('checking');
@@ -143,6 +145,12 @@ const AppContent: React.FC = () => {
     );
   }
 
+  if (isPaymentReturn()) {
+    return <PaymentReturnScreen authenticated={isAuthenticated} onVerified={applySubscription} onContinue={() => {
+      if (typeof window !== 'undefined') window.location.replace('/');
+    }} />;
+  }
+
   if (!isAuthenticated) {
     if (isDemoHostname()) return <DemoAccessScreen onSelect={loginDemo} />;
     if (publicScreen !== 'landing') {
@@ -168,6 +176,10 @@ const AppContent: React.FC = () => {
 
   if (user && (user.role === 'clinician' || user.role === 'lab')) {
     return withDemoControls(<ProviderWorkspace role={user.role} displayName={greetingName} onLogout={logout} onManageProfile={user.role === 'lab' ? () => setLabProfileOpen(true) : undefined} />);
+  }
+
+  if (user?.role === 'patient' && user.subscription && user.subscription.payment_method_status !== 'added' && !isDemoHostname()) {
+    return <MembershipSetupScreen onLogout={logout} />;
   }
 
   if (onboardingState === 'checking') {

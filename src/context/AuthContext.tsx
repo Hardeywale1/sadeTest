@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { ClinicianSettings, DemoRole, SubscriptionPlan, User } from '../types';
+import { ClinicianSettings, DemoRole, Subscription, SubscriptionPlan, User } from '../types';
 import { authApi } from '../api/authApi';
 import { profileApi } from '../api/profileApi';
 import { storage, TOKEN_KEYS } from '../api/client';
@@ -17,6 +17,7 @@ interface AuthContextType {
   exitDemo: () => Promise<void>;
   /** Re-reads the profile so a renamed account is reflected everywhere. */
   refreshUser: () => Promise<void>;
+  applySubscription: (subscription: Subscription) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -116,6 +117,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
   };
 
+  const applySubscription = async (subscription: Subscription) => {
+    if (!user) return;
+    const next = { ...user, subscription };
+    setUser(next);
+    await storage.setItem(TOKEN_KEYS.USER_DATA, JSON.stringify(next));
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -129,6 +137,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         logout,
         exitDemo,
         refreshUser: syncProfile,
+        applySubscription,
       }}
     >
       {children}

@@ -87,7 +87,7 @@ export const AuthScreen: React.FC<{ onBack?: () => void; portalRole?: PortalRole
             const checkout = await paymentsApi.initializePaystack();
             await Linking.openURL(checkout.authorization_url);
           } catch (paymentError: any) {
-            if (paymentError?.response?.status !== 503) throw paymentError;
+            throw paymentError;
           }
         }
       }
@@ -138,7 +138,7 @@ export const AuthScreen: React.FC<{ onBack?: () => void; portalRole?: PortalRole
             <Text style={styles.trialTitle}>Try Sadé free for 30 days</Text>
             <Text style={styles.trialSubtitle}>Your Basic membership begins after the free trial.</Text>
             {([
-              { id: 'basic' as const, name: 'Basic', price: '₦3,000', features: ['Cycle and symptom tracking', 'Period summaries', 'Journal, goals and community'] },
+              { id: 'basic' as const, name: 'Basic', price: '₦3,000', features: ['Cycle, bleeding and symptom tracking', 'Period summaries and irregular-cycle insights', 'Journal, health history and personal goals', 'Concern triage using your continuity record', 'Doctor, laboratory and care coordination', 'Sadé community access'] },
             ]).map((plan) => {
               const selected = selectedPlan === plan.id;
               return <View key={plan.id} style={[styles.planCard, selected && styles.planCardSelected]} accessibilityRole="radio" accessibilityState={{ checked: selected }}>
@@ -147,7 +147,7 @@ export const AuthScreen: React.FC<{ onBack?: () => void; portalRole?: PortalRole
               </View>;
             })}
             <View style={styles.securePayment}><MaterialCommunityIcons name="shield-lock-outline" size={21} color={COLORS.primary} /><View style={styles.securePaymentCopy}><Text style={styles.securePaymentTitle}>Secure card setup</Text><Text style={styles.securePaymentText}>Paystack collects your card details. Sadé never receives or stores them.</Text></View></View>
-            <View style={styles.trialTerms}><Text style={styles.trialTermsStrong}>30 days free</Text><Text style={styles.trialTermsText}>Your membership starts {trialEnd.toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}. Paystack Test Mode will verify the card before scheduling the subscription. Consultations, tests and medicines are charged separately.</Text></View>
+            <View style={styles.trialTerms}><Text style={styles.trialTermsStrong}>30 days free</Text><Text style={styles.trialTermsText}>Your membership starts {trialEnd.toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}. Paystack Test Mode charges ₦50 to verify the card before scheduling the subscription. Consultations, tests and medicines are charged separately.</Text></View>
             <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} disabled={loading}>{loading ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.submitBtnText}>Continue to Paystack</Text>}</TouchableOpacity>
             <TouchableOpacity style={styles.editAccount} onPress={() => setSignupStep('account')}><Text style={styles.editAccountText}>Edit account details</Text></TouchableOpacity>
           </> : <>
